@@ -211,6 +211,11 @@ for page in enumerate(gfiles):                             # one page per three 
     for j in range(0,3):
         if page[1][j] is not None:
             filename=page[1][j]+'.cif'
+            with open(filename, 'r') as f:
+                cif = Cif()
+                cif.parsefile(f.readlines())
+                print(cif.cif_data['_chemical_formula_sum'])
+
             with open(filename, 'r') as file:
                 ltext='no Formula'
                 lsg='no SG'
