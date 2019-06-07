@@ -283,16 +283,13 @@ class Cif(object):
     def __hash__(self):
         return hash(self.cif_data)
 
-    def __getattr__(self, item, item_alt=''):
+    def __getitem__(self, item):
         """
-        Returns an attribute of the cif data dictionary.
+        Returns an item of the cif data dictionary.
         """
-        if item in self.cif_data or item_alt in self.cif_data:
-            try:
-                return self.cif_data[item]
-            except KeyError:
-                return self.cif_data[item_alt]
-        else:
+        try:
+            return self.cif_data[item]
+        except KeyError:
             return ''
 
     def __str__(self) -> str:
