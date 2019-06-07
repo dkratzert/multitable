@@ -273,12 +273,12 @@ for page in enumerate(gfiles):  # one page per three structures:
                         if line.split(' ')[0] == slist[i][0]:
                             value = line.strip(slist[i][0]).lstrip().rstrip().strip("'").rstrip("\n\r")
                             ### SMALLER HACKS:
-                            if slist[i][0] == '_space_group_name_H-M_alt':
-                                if len(value) > 4:  # don't modify P 1
-                                    value = re.sub(r'\s1', '', value)  # remove extra Hall "1" for mono and tric
-                                value = re.sub(r'\s', '', value)  # remove all remaining whitespace
-                                space_group = value  # formatted for console output
-                                space_group_formated_text = [char for char in value]
+                            space_group = cif['_space_group_name_H-M_alt']
+                            if space_group:
+                                if len(space_group) > 4:  # don't modify P 1
+                                    space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
+                                space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
+                                space_group_formated_text = [char for char in space_group] # ???
                                 for k in range(0, len(space_group_formated_text)):
                                     sgrun = table.cell(slist[i][1] + 1, j + 1).paragraphs[0]
                                     sgrunsub = sgrun.add_run(space_group_formated_text[k])
@@ -288,63 +288,39 @@ for page in enumerate(gfiles):  # one page per three structures:
                                         if space_group_formated_text[k - 1].isdigit():
                                             sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
                                 # table.cell(slist[i][1]+1, j+1).text = value
-                            elif slist[i][0] == '_exptl_crystal_size_max':
-                                crystal_size_max = value
-                                break
-                            elif slist[i][0] == '_exptl_crystal_size_mid':
-                                crystal_size_mid = value
-                                break
-                            elif slist[i][0] == '_exptl_crystal_size_min':
-                                crystal_size_min = value
-                                break
-                            elif slist[i][0] == '_diffrn_radiation_type':
-                                radiation_type = value.replace('\\a', '\u03b1').replace('\\b', '\u03b2')
-                                break
-                            elif slist[i][0] == '_diffrn_radiation_wavelength':
-                                radiation_type = radiation_type + ' (\u03bb=' + value + ')'
-                                value = radiation_type
-                                value = value.replace(" ", "")
-                                valuep = value.partition("K")
-                                radrun = table.cell(slist[i][1] + 1, j + 1).paragraphs[0]
-                                radrun.add_run(valuep[0])
-                                radrunita = radrun.add_run(valuep[1])
-                                radrunita.font.italic = True
-                                radrun.add_run(valuep[2])
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_limit_h_min':
-                                limit_h_min = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_limit_h_max':
-                                limit_h_max = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_limit_k_min':
-                                limit_k_min = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_limit_k_max':
-                                limit_k_max = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_limit_l_min':
-                                limit_l_min = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_limit_l_max':
-                                limit_l_max = value
-                                break
-                            elif slist[i][0] == '_reflns_number_total':
-                                reflns_number_total = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_av_R_equivalents':
-                                reflns_av_R_equivalents = value
-                                break
-                            elif slist[i][0] == '_diffrn_reflns_av_unetI/netI':
-                                reflns_av_unetI = value
-                                break
+
                             else:
                                 table.cell(slist[i][1] + 1, j + 1).text = value
                                 break
                             break
+
+                wavelength = cif['_diffrn_radiation_wavelength']
+                """
+                radiation_type = radiation_type + ' (\u03bb=' + value + ')'
+                value = radiation_type
+                value = value.replace(" ", "")
+                valuep = value.partition("K")
+                radrun = table.cell(slist[i][1] + 1, j + 1).paragraphs[0]
+                radrun.add_run(valuep[0])
+                radrunita = radrun.add_run(valuep[1])
+                radrunita.font.italic = True
+                radrun.add_run(valuep[2])
+                """
+                radiation_type = cif['_diffrn_radiation_type']
+                crystal_size_min = cif['_exptl_crystal_size_min']
+                crystal_size_mid = cif['_exptl_crystal_size_mid']
+                crystal_size_max = cif['_exptl_crystal_size_max']
+                limit_h_min = cif['_diffrn_reflns_limit_h_min']
+                limit_h_max = cif['_diffrn_reflns_limit_h_max']
+                limit_k_min = cif['_diffrn_reflns_limit_k_min']
+                limit_k_max = cif['_diffrn_reflns_limit_k_max']
                 theta_min = cif['_diffrn_reflns_theta_min']
                 theta_max = cif['_diffrn_reflns_theta_max']
-
+                limit_l_min = cif['_diffrn_reflns_limit_l_min']
+                limit_l_max = cif['_diffrn_reflns_limit_l_max']
+                reflns_number_total = cif['_reflns_number_total']
+                reflns_av_R_equivalents = cif['_diffrn_reflns_av_R_equivalents']
+                reflns_av_unetI = cif['_diffrn_reflns_av_unetI/netI']
                 ls_number_reflns = cif['_refine_ls_number_reflns']
                 ls_number_restraints = cif['_refine_ls_number_restraints']
                 ls_number_parameters = cif['_refine_ls_number_parameters']
