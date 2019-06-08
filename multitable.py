@@ -30,27 +30,27 @@ for f in os.listdir('./'):
         files.append(f)
 
 nfiles = [i.rstrip('.cif') for i in files]  # remove file suffix for display
-gfiles = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
+group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
 
 document = Document()
 style = document.styles['Normal']
 font = style.font
-font.name = 'Times New Roman'
+font.name = 'Callibri'
 font.size = Pt(10)
 
 strHead = 'Structure Tables'
 str1Par = '\nFormatting by user needed: font for symbols, table cell widths!'
-str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
+#str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
 str3Par = '\nParsed files:\n\n' + "\n".join(files)
 
 document.add_heading(strHead)
 document.add_paragraph(str1Par)
-document.add_paragraph(str2Par)
+#document.add_paragraph(str2Par)
 document.add_paragraph(str3Par)
 
 document.add_page_break()
 
-slist = (
+cif_keywords_list = (
     ['_chemical_formula_weight', 1],
     ['_diffrn_ambient_temperature', 2],
     ['_space_group_crystal_system', 3],
@@ -97,7 +97,7 @@ slist = (
     ['_refine_diff_density_min', 28]
 )
 
-lstindex = len(gfiles) - 1
+lstindex = len(group_of_files) - 1
 
 
 def populate_description_columns():
@@ -197,7 +197,7 @@ def populate_description_columns():
     lgnd29sub1.font.superscript = True
 
 
-for page in enumerate(gfiles):  # one page per three structures:
+for page in enumerate(group_of_files):  # one page per three structures:
     document.add_paragraph('')  # cannot format cells directly,
     paragraph = document.paragraphs[-1]  # but it will keep settings from
     paragraph_format = style.paragraph_format  # previous paragraph -> dirty hack:
@@ -207,7 +207,7 @@ for page in enumerate(gfiles):  # one page per three structures:
     p.getparent().remove(p)
     p._p = p._element = None
     table = document.add_table(rows=1, cols=4)
-    hdr_cells = table.rows[0].cells
+    header_cells = table.rows[0].cells
     content = list()
 
     # setup table format:
@@ -219,80 +219,68 @@ for page in enumerate(gfiles):  # one page per three structures:
     populate_description_columns()
 
     for j in range(0, 3):  # the three columns
-        if page[1][j] is not None:
+        if page[1][j]:
             filename = page[1][j] + '.cif'
             with open(filename, 'r') as f:
                 cif = Cif()
                 cif.parsefile(f.readlines())
-                print(cif.cif_data['_chemical_formula_sum'])
+                #print(cif.cif_data['_chemical_formula_sum'])
 
-            with open(filename, 'r') as file:
-                ltext = 'no Formula'
-                space_group = 'no SG'
-                crystal_size_max = ''
-                crystal_size_mid = ''
-                crystal_size_min = ''
-                radiation_type = ''
-                theta_min = ''
-                theta_max = ''
-                limit_h_min = ''
-                limit_h_max = ''
-                limit_k_min = ''
-                limit_k_max = ''
-                limit_l_min = ''
-                limit_l_max = ''
-                reflns_number_total = ''
-                reflns_av_R_equivalents = ''
-                reflns_av_unetI = ''
-                ls_number_reflns = ''
-                ls_number_restraints = ''
-                ls_number_parameters = ''
-                ls_R_factor_gt = ''
-                ls_wR_factor_gt = ''
-                ls_R_factor_all = ''
-                ls_wR_factor_ref = ''
-                diff_density_max = ''
-                diff_density_min = ''
-                cif = Cif()
-                cif.parsefile(file.readlines())
+            ltext = 'no Formula'
+            space_group = 'no SG'
+            crystal_size_max = ''
+            crystal_size_mid = ''
+            crystal_size_min = ''
+            radiation_type = ''
+            theta_min = ''
+            theta_max = ''
+            limit_h_min = ''
+            limit_h_max = ''
+            limit_k_min = ''
+            limit_k_max = ''
+            limit_l_min = ''
+            limit_l_max = ''
+            reflns_number_total = ''
+            reflns_av_R_equivalents = ''
+            reflns_av_unetI = ''
+            ls_number_reflns = ''
+            ls_number_restraints = ''
+            ls_number_parameters = ''
+            ls_R_factor_gt = ''
+            ls_wR_factor_gt = ''
+            ls_R_factor_all = ''
+            ls_wR_factor_ref = ''
+            diff_density_max = ''
+            diff_density_min = ''
 
-                for line in file:
-                    ### FORMULA:
-                    if line.startswith('_chemical_formula_sum'):
-                        ltext = line.strip('_chemical_formula_sum').lstrip().rstrip().strip("'").rstrip(
-                            "\n\r")  # this works
-                        ltext2 = ltext.replace(" ", "")
-                        ltext3 = [''.join(x[1]) for x in it.groupby(ltext2, lambda x: x.isalpha())]
-                        for i in range(0, len(ltext3)):
-                            formrun = table.cell(1, j + 1).paragraphs[0]
-                            formrunsub = formrun.add_run(ltext3[i])
-                            if isfloat(ltext3[i]):
-                                formrunsub.font.subscript = True
-                    ### ALL UNPROBLEMATIC ENTRIES TREATED THE SAME (-> slist):
-                    for i in range(0, len(slist)):
-                        if line.split(' ')[0] == slist[i][0]:
-                            value = line.strip(slist[i][0]).lstrip().rstrip().strip("'").rstrip("\n\r")
-                            ### SMALLER HACKS:
-                            space_group = cif['_space_group_name_H-M_alt']
-                            if space_group:
-                                if len(space_group) > 4:  # don't modify P 1
-                                    space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
-                                space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
-                                space_group_formated_text = [char for char in space_group] # ???
-                                for k in range(0, len(space_group_formated_text)):
-                                    sgrun = table.cell(slist[i][1] + 1, j + 1).paragraphs[0]
-                                    sgrunsub = sgrun.add_run(space_group_formated_text[k])
-                                    if not space_group_formated_text[k].isdigit():
-                                        sgrunsub.font.italic = True
-                                    else:
-                                        if space_group_formated_text[k - 1].isdigit():
-                                            sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
-                                # table.cell(slist[i][1]+1, j+1).text = value
+            if cif['_chemical_formula_sum']:
+                ltext = cif['_chemical_formula_sum']
+                ltext2 = ltext.replace(" ", "")
+                ltext3 = [''.join(x[1]) for x in it.groupby(ltext2, lambda x: x.isalpha())]
+                for i in range(0, len(ltext3)):
+                    formrun = table.cell(1, j + 1).paragraphs[0]
+                    formrunsub = formrun.add_run(ltext3[i])
+                    if isfloat(ltext3[i]):
+                        formrunsub.font.subscript = True
 
-                            else:
-                                table.cell(slist[i][1] + 1, j + 1).text = value
-                                break
-                            break
+            space_group = cif['_space_group_name_H-M_alt']
+            if space_group:
+                if len(space_group) > 4:  # don't modify P 1
+                    space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
+                space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
+                space_group_formated_text = [char for char in space_group]  # ???
+                for k in range(0, len(space_group_formated_text)):
+                    sgrun = table.cell(cif_keywords_list[i][1] + 1, j + 1).paragraphs[0]
+                    sgrunsub = sgrun.add_run(space_group_formated_text[k])
+                    if not space_group_formated_text[k].isdigit():
+                        sgrunsub.font.italic = True
+                    else:
+                        if space_group_formated_text[k - 1].isdigit():
+                            sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
+
+            for num, key in enumerate(cif_keywords_list):
+                if cif[key[0]]:
+                    table.cell(cif_keywords_list[i][1]+1, j+1).text = cif[key[0]]
 
                 wavelength = cif['_diffrn_radiation_wavelength']
                 """
@@ -379,11 +367,12 @@ for page in enumerate(gfiles):  # one page per three structures:
                 rfullrun.add_run(' = ' + ls_wR_factor_ref)
                 table.cell(29, j + 1).text = diff_density_max + '/' + diff_density_min
                 print('File parsed: ' + filename + '  (' + ltext + ')  ' + space_group)
+                break
 
-    for i in enumerate(hdr_cells):
+    for i in enumerate(header_cells):
         if i[0] < 3 and page[1][i[0]] is not None:
             j = i[0] + 1
-            hdr_cells[j].text = page[1][i[0]]
+            header_cells[j].text = page[1][i[0]]
     # page break between tables:
     if page[0] < lstindex:
         document.add_page_break()
