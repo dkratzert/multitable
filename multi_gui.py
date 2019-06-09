@@ -98,7 +98,7 @@ class AppWindow(QMainWindow):
             files_list.append(itemtxt)
             self.ui.OutputTextEdit.append(Path(itemtxt).name)
         if not files_list:
-            return 
+            return
         multitable.make_report_from(files_list)
         self.ui.OutputTextEdit.append('\nReport finished - output file: multitable.docx')
         self.ui.CifFileListTreeWidget.clear()
