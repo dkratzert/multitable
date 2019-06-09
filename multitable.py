@@ -1,106 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import itertools as it
-import os
 import re
+from pathlib import Path
+from typing import List
 
 from docx import Document
 from docx.shared import Pt
 
 # compiled with "Py -3 -m PyInstaller multitable.spec --onefile"
 from cif.fileparser import Cif
+from tools import grouper, isfloat, get_files_from_current_dir, cif_keywords_list
 
 
-def grouper(inputs, n, fillvalue=None):
-    iters = [iter(inputs)] * n
-    return it.zip_longest(*iters, fillvalue=fillvalue)
-
-
-def isfloat(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
-
-
-files = []
-for f in os.listdir('./'):
-    if f.endswith('.cif'):
-        files.append(f)
-
-nfiles = [i.rstrip('.cif') for i in files]  # remove file suffix for display
-group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
-
-document = Document()
-style = document.styles['Normal']
-font = style.font
-font.name = 'Callibri'
-font.size = Pt(10)
-
-strHead = 'Structure Tables'
-str1Par = '\nFormatting by user needed: font for symbols, table cell widths!'
-# str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
-str3Par = '\nParsed files:\n\n' + "\n".join(files)
-
-document.add_heading(strHead)
-document.add_paragraph(str1Par)
-# document.add_paragraph(str2Par)
-document.add_paragraph(str3Par)
-
-document.add_page_break()
-
-cif_keywords_list = (
-    ['_chemical_formula_weight', 1],
-    ['_diffrn_ambient_temperature', 2],
-    ['_space_group_crystal_system', 3],
-    ['_space_group_name_H-M_alt', 4],
-    ['_cell_length_a', 5],
-    ['_cell_length_b', 6],
-    ['_cell_length_c', 7],
-    ['_cell_angle_alpha', 8],
-    ['_cell_angle_beta', 9],
-    ['_cell_angle_gamma', 10],
-    ['_cell_volume', 11],
-    ['_cell_formula_units_Z', 12],
-    ['_exptl_crystal_density_diffrn', 13],
-    ['_exptl_absorpt_coefficient_mu', 14],
-    ['_exptl_crystal_F_000', 15],
-    ['_exptl_crystal_size_max', 16],
-    ['_exptl_crystal_size_mid', 16],
-    ['_exptl_crystal_size_min', 16],
-    ['_exptl_crystal_colour', 17],
-    ['_exptl_crystal_description', 18],
-    ['_diffrn_radiation_type', 19],
-    ['_diffrn_radiation_wavelength', 19],
-    ['_diffrn_reflns_theta_min', 20],
-    ['_diffrn_reflns_theta_max', 20],
-    ['_diffrn_reflns_limit_h_min', 21],
-    ['_diffrn_reflns_limit_h_max', 21],
-    ['_diffrn_reflns_limit_k_min', 21],
-    ['_diffrn_reflns_limit_k_max', 21],
-    ['_diffrn_reflns_limit_l_min', 21],
-    ['_diffrn_reflns_limit_l_max', 21],
-    ['_diffrn_reflns_number', 22],
-    ['_reflns_number_total', 23],
-    ['_diffrn_reflns_av_R_equivalents', 23],
-    ['_diffrn_reflns_av_unetI/netI', 23],
-    ['_refine_ls_number_reflns', 24],
-    ['_refine_ls_number_restraints', 24],
-    ['_refine_ls_number_parameters', 24],
-    ['_refine_ls_goodness_of_fit_ref', 25],
-    ['_refine_ls_R_factor_gt', 26],
-    ['_refine_ls_wR_factor_gt', 26],
-    ['_refine_ls_R_factor_all', 27],
-    ['_refine_ls_wR_factor_ref', 27],
-    ['_refine_diff_density_max', 28],
-    ['_refine_diff_density_min', 28]
-)
-
-lstindex = len(group_of_files) - 1
-
-
-def populate_description_columns():
+def populate_description_columns(table):
     """
     This Method adds the descriptions to the fist table column.
     """
@@ -197,7 +110,7 @@ def populate_description_columns():
     lgnd29sub1.font.superscript = True
 
 
-def format_space_group(table):
+def format_space_group(table, cif, table_column):
     """
     Sets formating of the space group symbol in row 6.
     """
@@ -221,161 +134,195 @@ def format_space_group(table):
     return space_group
 
 
-for page in enumerate(group_of_files):  # one page per three structures:
-    document.add_paragraph('')  # cannot format cells directly,
-    paragraph = document.paragraphs[-1]  # but it will keep settings from
-    paragraph_format = style.paragraph_format  # previous paragraph -> dirty hack:
-    paragraph_format.space_before = Pt(4)  # create paragraph, apply style,
-    paragraph_format.space_after = Pt(0)  # kill paragraph, create table.
-    p = paragraph._element
-    p.getparent().remove(p)
-    p._p = p._element = None
-    table = document.add_table(rows=1, cols=4)
-    header_cells = table.rows[0].cells
+def make_report_from(files: List):
+    """
+    Creates a tabular cif report.
+    :param files: Input cif files a list.
+    """
+    nfiles = [i.rstrip('.cif') for i in files]  # remove file suffix for display
+    group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
 
-    sum_formula = 'no sum formula'
+    document = Document()
+    style = document.styles['Normal']
+    font = style.font
+    font.name = 'Callibri'
+    font.size = Pt(10)
 
-    # setup table format:
-    for i in range(0, 29):
-        row = table.add_row()  # define row and cells separately
-        for table_column in range(0, 3):
-            row.cells[table_column].style = document.styles['Normal']
+    strHead = 'Structure Tables'
+    # str1Par = '\nFormatting by user needed: font for symbols, table cell widths!'
+    # str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
+    # str3Par = '\nParsed files:\n\n' + "\n".join(files)
 
-    populate_description_columns()
+    head = document.add_heading(strHead, 1)
+    paragraph_format = head.style.paragraph_format
+    paragraph_format.space_before = Pt(0)
+    # document.add_paragraph(str1Par)
+    # document.add_paragraph(str2Par)
+    # document.add_paragraph(str3Par)
 
-    for table_column in range(0, 3):  # the three columns
-        if page[1][table_column]:
-            filename = page[1][table_column] + '.cif'
-            cif = Cif()
-            with open(filename, 'r') as f:
-                cif.parsefile(f.readlines())
+    # document.add_page_break()
 
-            # The sum formula:
-            if cif['_chemical_formula_sum']:
-                sum_formula = cif['_chemical_formula_sum']
-                ltext2 = sum_formula.replace(" ", "")
-                ltext3 = [''.join(x[1]) for x in it.groupby(ltext2, lambda x: x.isalpha())]
-                for _, word in enumerate(ltext3):
-                    formrun = table.cell(1, table_column + 1).paragraphs[0]
-                    formrunsub = formrun.add_run(word)
-                    if isfloat(word):
-                        formrunsub.font.subscript = True
+    lstindex = len(group_of_files) - 1
 
-            space_group = format_space_group(table)
+    for page in enumerate(group_of_files):  # one page per three structures:
+        document.add_paragraph('')  # cannot format cells directly,
+        paragraph = document.paragraphs[-1]  # but it will keep settings from
+        paragraph_format = style.paragraph_format  # previous paragraph -> dirty hack:
+        paragraph_format.space_before = Pt(4)  # create paragraph, apply style,
+        paragraph_format.space_after = Pt(0)  # kill paragraph, create table.
+        p = paragraph._element
+        p.getparent().remove(p)
+        p._p = p._element = None
+        table = document.add_table(rows=1, cols=4)
+        header_cells = table.rows[0].cells
 
-            # Set text for all usual cif keywords:
-            for _, key in enumerate(cif_keywords_list):
-                cell = table.cell(key[1] + 1, table_column + 1)
-                if cif[key[0]]:
-                    # already done:
-                    if key[0] == '_space_group_name_H-M_alt':
+        sum_formula = 'no sum formula'
+
+        # setup table format:
+        for i in range(0, 29):
+            row = table.add_row()  # define row and cells separately
+            for table_column in range(0, 3):
+                row.cells[table_column].style = document.styles['Normal']
+
+        populate_description_columns(table)
+
+        for table_column in range(0, 3):  # the three columns
+            if page[1][table_column]:
+                filename = page[1][table_column] + '.cif'
+                cif = Cif()
+                with open(filename, 'r') as f:
+                    cif.parsefile(f.readlines())
+
+                # The sum formula:
+                if cif['_chemical_formula_sum']:
+                    sum_formula = cif['_chemical_formula_sum']
+                    ltext2 = sum_formula.replace(" ", "")
+                    ltext3 = [''.join(x[1]) for x in it.groupby(ltext2, lambda x: x.isalpha())]
+                    for _, word in enumerate(ltext3):
+                        formrun = table.cell(1, table_column + 1).paragraphs[0]
+                        formrunsub = formrun.add_run(word)
+                        if isfloat(word):
+                            formrunsub.font.subscript = True
+
+                space_group = format_space_group(table, cif, table_column)
+
+                # Set text for all usual cif keywords:
+                for _, key in enumerate(cif_keywords_list):
+                    cell = table.cell(key[1] + 1, table_column + 1)
+                    if cif[key[0]]:
+                        # already done:
+                        if key[0] == '_space_group_name_H-M_alt':
+                            continue
+                        cell.text = cif[key[0]]
+                    else:
+                        cell.text = '??'
                         continue
-                    cell.text = cif[key[0]]
-                else:
-                    cell.text = '??'
-                    continue
 
-            radiation_type = cif['_diffrn_radiation_type']
-            radiation_wavelength = cif['_diffrn_radiation_wavelength']
-            crystal_size_min = cif['_exptl_crystal_size_min']
-            crystal_size_mid = cif['_exptl_crystal_size_mid']
-            crystal_size_max = cif['_exptl_crystal_size_max']
-            limit_h_min = cif['_diffrn_reflns_limit_h_min']
-            limit_h_max = cif['_diffrn_reflns_limit_h_max']
-            limit_k_min = cif['_diffrn_reflns_limit_k_min']
-            limit_k_max = cif['_diffrn_reflns_limit_k_max']
-            theta_min = cif['_diffrn_reflns_theta_min']
-            theta_max = cif['_diffrn_reflns_theta_max']
-            limit_l_min = cif['_diffrn_reflns_limit_l_min']
-            limit_l_max = cif['_diffrn_reflns_limit_l_max']
-            reflns_number_total = cif['_reflns_number_total']
-            reflns_av_R_equivalents = cif['_diffrn_reflns_av_R_equivalents']
-            reflns_av_unetI = cif['_diffrn_reflns_av_unetI/netI']
-            ls_number_reflns = cif['_refine_ls_number_reflns']
-            ls_number_restraints = cif['_refine_ls_number_restraints']
-            ls_number_parameters = cif['_refine_ls_number_parameters']
-            ls_R_factor_gt = cif['_refine_ls_R_factor_gt']
-            ls_wR_factor_gt = cif['_refine_ls_wR_factor_gt']
-            ls_R_factor_all = cif['_refine_ls_R_factor_all']
-            ls_wR_factor_ref = cif['_refine_ls_wR_factor_ref']
-            diff_density_min = "{0:.2f}".format(round(float(cif['_refine_diff_density_min']), 2))
-            diff_density_max = "{0:.2f}".format(round(float(cif['_refine_diff_density_max']), 2))
+                radiation_type = cif['_diffrn_radiation_type']
+                radiation_wavelength = cif['_diffrn_radiation_wavelength']
+                crystal_size_min = cif['_exptl_crystal_size_min']
+                crystal_size_mid = cif['_exptl_crystal_size_mid']
+                crystal_size_max = cif['_exptl_crystal_size_max']
+                limit_h_min = cif['_diffrn_reflns_limit_h_min']
+                limit_h_max = cif['_diffrn_reflns_limit_h_max']
+                limit_k_min = cif['_diffrn_reflns_limit_k_min']
+                limit_k_max = cif['_diffrn_reflns_limit_k_max']
+                theta_min = cif['_diffrn_reflns_theta_min']
+                theta_max = cif['_diffrn_reflns_theta_max']
+                limit_l_min = cif['_diffrn_reflns_limit_l_min']
+                limit_l_max = cif['_diffrn_reflns_limit_l_max']
+                reflns_number_total = cif['_reflns_number_total']
+                reflns_av_R_equivalents = cif['_diffrn_reflns_av_R_equivalents']
+                reflns_av_unetI = cif['_diffrn_reflns_av_unetI/netI']
+                ls_number_reflns = cif['_refine_ls_number_reflns']
+                ls_number_restraints = cif['_refine_ls_number_restraints']
+                ls_number_parameters = cif['_refine_ls_number_parameters']
+                ls_R_factor_gt = cif['_refine_ls_R_factor_gt']
+                ls_wR_factor_gt = cif['_refine_ls_wR_factor_gt']
+                ls_R_factor_all = cif['_refine_ls_R_factor_all']
+                ls_wR_factor_ref = cif['_refine_ls_wR_factor_ref']
+                diff_density_min = "{0:.2f}".format(round(float(cif['_refine_diff_density_min']), 2))
+                diff_density_max = "{0:.2f}".format(round(float(cif['_refine_diff_density_max']), 2))
 
-            # now prepare & write all the concatenated & derived cell contents:
-            table.cell(17, table_column + 1).text = crystal_size_max + '\u00d7' + \
-                                                    crystal_size_mid + '\u00d7' + \
-                                                    crystal_size_min
-            radiation_type = radiation_type + ' (\u03bb =' + radiation_wavelength + ')'
-            # TODO: alpha is still \a
-            # radiation_type = radiation_type.replace(" ", "")
-            radtype = radiation_type.partition("K")
-            radrun = table.cell(20, table_column + 1).paragraphs[0]
-            radrun.clear()
-            # radiation type e.g. Mo:
-            radrun.add_run(radtype[0] + ' ')
-            # K line:
-            radrunita = radrun.add_run(radtype[1])
-            radrunita.font.italic = True
-            alpha = radrun.add_run('\u03b1')
-            alpha.font.italic = True
-            alpha.font.subscript = True
-            # wavelength lambda:
-            radrun.add_run(' ' + ''.join(radtype[2].split()[1:]))
-            table.cell(21, table_column + 1).text = "{0:.2f}".format(2 * float(theta_min)) + \
-                                                    ' to ' + "{0:.2f}".format(2 * float(theta_max))
-            table.cell(22, table_column + 1).text = limit_h_min + ' \u2264 h \u2264 ' \
-                                                    + limit_h_max + '\n' \
-                                                    + limit_k_min + ' \u2264 k \u2264 ' \
-                                                    + limit_k_max + '\n' \
-                                                    + limit_l_min + ' \u2264 l \u2264 ' \
-                                                    + limit_l_max
-            rintrun = table.cell(24, table_column + 1).paragraphs[0]
-            rintrun.add_run(reflns_number_total + '\n')
-            rintita1 = rintrun.add_run('R')
-            rintita1.font.italic = True
-            rintsub1 = rintrun.add_run('int')
-            rintsub1.font.subscript = True
-            rintrun.add_run(' = ' + reflns_av_R_equivalents + '\n')
-            rintita2 = rintrun.add_run('R')
-            rintita2.font.italic = True
-            rintsub2 = rintrun.add_run('sigma')
-            rintsub2.font.subscript = True
-            rintrun.add_run(' = ' + reflns_av_unetI)
-            table.cell(25, table_column + 1).text = ls_number_reflns + '/' \
-                                                    + ls_number_restraints + '/' \
-                                                    + ls_number_parameters
-            r2sigrun = table.cell(27, table_column + 1).paragraphs[0]
-            r2sigita1 = r2sigrun.add_run('R')
-            r2sigita1.font.italic = True
-            r2sigsub1 = r2sigrun.add_run('1')
-            r2sigsub1.font.subscript = True
-            r2sigrun.add_run(' = ' + ls_R_factor_gt + '\nw')
-            r2sigita2 = r2sigrun.add_run('R')
-            r2sigita2.font.italic = True
-            r2sigsub2 = r2sigrun.add_run('2')
-            r2sigsub2.font.subscript = True
-            r2sigrun.add_run(' = ' + ls_wR_factor_gt)
-            rfullrun = table.cell(28, table_column + 1).paragraphs[0]
-            rfullita1 = rfullrun.add_run('R')
-            rfullita1.font.italic = True
-            rfullsub1 = rfullrun.add_run('1')
-            rfullsub1.font.subscript = True
-            rfullrun.add_run(' = ' + ls_R_factor_all + '\nw')
-            rfullita2 = rfullrun.add_run('R')
-            rfullita2.font.italic = True
-            rfullsub2 = rfullrun.add_run('2')
-            rfullsub2.font.subscript = True
-            rfullrun.add_run(' = ' + ls_wR_factor_ref)
-            table.cell(29, table_column + 1).text = diff_density_max + '/' + diff_density_min
-            print('File parsed: ' + filename + '  (' + sum_formula + ')  ' + space_group)
+                # now prepare & write all the concatenated & derived cell contents:
+                table.cell(17, table_column + 1).text = crystal_size_max + '\u00d7' + \
+                                                        crystal_size_mid + '\u00d7' + \
+                                                        crystal_size_min
+                radiation_type = radiation_type + ' (\u03bb =' + radiation_wavelength + ')'
+                # TODO: alpha is still \a
+                # radiation_type = radiation_type.replace(" ", "")
+                radtype = radiation_type.partition("K")
+                radrun = table.cell(20, table_column + 1).paragraphs[0]
+                radrun.clear()
+                # radiation type e.g. Mo:
+                radrun.add_run(radtype[0] + ' ')
+                # K line:
+                radrunita = radrun.add_run(radtype[1])
+                radrunita.font.italic = True
+                alpha = radrun.add_run('\u03b1')
+                alpha.font.italic = True
+                alpha.font.subscript = True
+                # wavelength lambda:
+                radrun.add_run(' ' + ''.join(radtype[2].split()[1:]))
+                table.cell(21, table_column + 1).text = "{0:.2f}".format(2 * float(theta_min)) + \
+                                                        ' to ' + "{0:.2f}".format(2 * float(theta_max))
+                table.cell(22, table_column + 1).text = limit_h_min + ' \u2264 h \u2264 ' \
+                                                        + limit_h_max + '\n' \
+                                                        + limit_k_min + ' \u2264 k \u2264 ' \
+                                                        + limit_k_max + '\n' \
+                                                        + limit_l_min + ' \u2264 l \u2264 ' \
+                                                        + limit_l_max
+                rintrun = table.cell(24, table_column + 1).paragraphs[0]
+                rintrun.add_run(reflns_number_total + '\n')
+                rintita1 = rintrun.add_run('R')
+                rintita1.font.italic = True
+                rintsub1 = rintrun.add_run('int')
+                rintsub1.font.subscript = True
+                rintrun.add_run(' = ' + reflns_av_R_equivalents + '\n')
+                rintita2 = rintrun.add_run('R')
+                rintita2.font.italic = True
+                rintsub2 = rintrun.add_run('sigma')
+                rintsub2.font.subscript = True
+                rintrun.add_run(' = ' + reflns_av_unetI)
+                table.cell(25, table_column + 1).text = ls_number_reflns + '/' \
+                                                        + ls_number_restraints + '/' \
+                                                        + ls_number_parameters
+                r2sigrun = table.cell(27, table_column + 1).paragraphs[0]
+                r2sigita1 = r2sigrun.add_run('R')
+                r2sigita1.font.italic = True
+                r2sigsub1 = r2sigrun.add_run('1')
+                r2sigsub1.font.subscript = True
+                r2sigrun.add_run(' = ' + ls_R_factor_gt + '\nw')
+                r2sigita2 = r2sigrun.add_run('R')
+                r2sigita2.font.italic = True
+                r2sigsub2 = r2sigrun.add_run('2')
+                r2sigsub2.font.subscript = True
+                r2sigrun.add_run(' = ' + ls_wR_factor_gt)
+                rfullrun = table.cell(28, table_column + 1).paragraphs[0]
+                rfullita1 = rfullrun.add_run('R')
+                rfullita1.font.italic = True
+                rfullsub1 = rfullrun.add_run('1')
+                rfullsub1.font.subscript = True
+                rfullrun.add_run(' = ' + ls_R_factor_all + '\nw')
+                rfullita2 = rfullrun.add_run('R')
+                rfullita2.font.italic = True
+                rfullsub2 = rfullrun.add_run('2')
+                rfullsub2.font.subscript = True
+                rfullrun.add_run(' = ' + ls_wR_factor_ref)
+                table.cell(29, table_column + 1).text = diff_density_max + '/' + diff_density_min
+                print('File parsed: ' + filename + '  (' + sum_formula + ')  ' + space_group)
 
-    for i in enumerate(header_cells):
-        if i[0] < 3 and page[1][i[0]] is not None:
-            table_column = i[0] + 1
-            header_cells[table_column].text = page[1][i[0]]
-    # page break between tables:
-    if page[0] < lstindex:
-        document.add_page_break()
+        for i in enumerate(header_cells):
+            if i[0] < 3 and page[1][i[0]] is not None:
+                table_column = i[0] + 1
+                header_cells[table_column].text = Path(page[1][i[0]]).name + '.cif'
+        # page break between tables:
+        if page[0] < lstindex:
+            document.add_page_break()
 
-print('\nScript finished - output file: multitable.docx')
-document.save('multitable.docx')
+    print('\nScript finished - output file: multitable.docx')
+    document.save('multitable.docx')
+
+
+if __name__ == '__main__':
+    make_report_from(get_files_from_current_dir())
