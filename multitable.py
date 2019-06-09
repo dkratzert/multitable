@@ -40,12 +40,12 @@ font.size = Pt(10)
 
 strHead = 'Structure Tables'
 str1Par = '\nFormatting by user needed: font for symbols, table cell widths!'
-#str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
+# str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
 str3Par = '\nParsed files:\n\n' + "\n".join(files)
 
 document.add_heading(strHead)
 document.add_paragraph(str1Par)
-#document.add_paragraph(str2Par)
+# document.add_paragraph(str2Par)
 document.add_paragraph(str3Par)
 
 document.add_page_break()
@@ -197,6 +197,30 @@ def populate_description_columns():
     lgnd29sub1.font.superscript = True
 
 
+def format_space_group(table):
+    """
+    Sets formating of the space group symbol in row 6.
+    """
+    # The HM space group symbol
+    space_group = cif['_space_group_name_H-M_alt']
+    if space_group:
+        if len(space_group) > 4:  # don't modify P 1
+            space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
+        space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
+        space_group_formated_text = [char for char in space_group]  # ???)
+        sgrun = table.cell(5, table_column + 1).paragraphs[0]
+        for k in range(0, len(space_group_formated_text)):
+            sgrunsub = sgrun.add_run(space_group_formated_text[k])
+            if not space_group_formated_text[k].isdigit():
+                sgrunsub.font.italic = True
+            else:
+                if space_group_formated_text[k - 1].isdigit():
+                    sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
+    else:
+        space_group = 'no space group'
+    return space_group
+
+
 for page in enumerate(group_of_files):  # one page per three structures:
     document.add_paragraph('')  # cannot format cells directly,
     paragraph = document.paragraphs[-1]  # but it will keep settings from
@@ -208,7 +232,8 @@ for page in enumerate(group_of_files):  # one page per three structures:
     p._p = p._element = None
     table = document.add_table(rows=1, cols=4)
     header_cells = table.rows[0].cells
-    content = list()
+
+    sum_formula = 'no sum formula'
 
     # setup table format:
     for i in range(0, 29):
@@ -221,83 +246,37 @@ for page in enumerate(group_of_files):  # one page per three structures:
     for table_column in range(0, 3):  # the three columns
         if page[1][table_column]:
             filename = page[1][table_column] + '.cif'
+            cif = Cif()
             with open(filename, 'r') as f:
-                cif = Cif()
                 cif.parsefile(f.readlines())
-                #print(cif.cif_data['_chemical_formula_sum'])
-
-            ltext = 'no Formula'
-            space_group = 'no SG'
-            crystal_size_max = ''
-            crystal_size_mid = ''
-            crystal_size_min = ''
-            radiation_type = ''
-            theta_min = ''
-            theta_max = ''
-            limit_h_min = ''
-            limit_h_max = ''
-            limit_k_min = ''
-            limit_k_max = ''
-            limit_l_min = ''
-            limit_l_max = ''
-            reflns_number_total = ''
-            reflns_av_R_equivalents = ''
-            reflns_av_unetI = ''
-            ls_number_reflns = ''
-            ls_number_restraints = ''
-            ls_number_parameters = ''
-            ls_R_factor_gt = ''
-            ls_wR_factor_gt = ''
-            ls_R_factor_all = ''
-            ls_wR_factor_ref = ''
-            diff_density_max = ''
-            diff_density_min = ''
 
             # The sum formula:
             if cif['_chemical_formula_sum']:
-                ltext = cif['_chemical_formula_sum']
-                ltext2 = ltext.replace(" ", "")
+                sum_formula = cif['_chemical_formula_sum']
+                ltext2 = sum_formula.replace(" ", "")
                 ltext3 = [''.join(x[1]) for x in it.groupby(ltext2, lambda x: x.isalpha())]
-                for i in range(0, len(ltext3)):
+                for _, word in enumerate(ltext3):
                     formrun = table.cell(1, table_column + 1).paragraphs[0]
-                    formrunsub = formrun.add_run(ltext3[i])
-                    if isfloat(ltext3[i]):
+                    formrunsub = formrun.add_run(word)
+                    if isfloat(word):
                         formrunsub.font.subscript = True
 
-            for num, key in enumerate(cif_keywords_list):
-                if cif[key[0]]:
-                    #print(key)
-                    table.cell(cif_keywords_list[num][1], table_column + 1).text = cif[key[0]]
+            space_group = format_space_group(table)
 
-                # The HM space group symbol
-                # TODO: put this in separate method:
-                space_group = cif['_space_group_name_H-M_alt']
-                if space_group:
-                    if len(space_group) > 4:  # don't modify P 1
-                        space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
-                    space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
-                    space_group_formated_text = [char for char in space_group]  # ???
-                    for k in range(0, len(space_group_formated_text)):
-                        sgrun = table.cell(cif_keywords_list[num][1] + 1, table_column + 1).paragraphs[0]
-                        sgrunsub = sgrun.add_run(space_group_formated_text[k])
-                        if not space_group_formated_text[k].isdigit():
-                            sgrunsub.font.italic = True
-                        else:
-                            if space_group_formated_text[k - 1].isdigit():
-                                sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
+            # Set text for all usual cif keywords:
+            for _, key in enumerate(cif_keywords_list):
+                cell = table.cell(key[1] + 1, table_column + 1)
+                if cif[key[0]]:
+                    # already done:
+                    if key[0] == '_space_group_name_H-M_alt':
+                        continue
+                    cell.text = cif[key[0]]
+                else:
+                    cell.text = '??'
+                    continue
 
             radiation_type = cif['_diffrn_radiation_type']
-            wavelength = cif['_diffrn_radiation_wavelength']
-            radiation_type = radiation_type + ' (\u03bb=' + wavelength + ')'
-            value = radiation_type
-            value = value.replace(" ", "")
-            valuep = value.partition("K")
-            radrun = table.cell(19, table_column + 1).paragraphs[0]
-            radrun.add_run(valuep[0])
-            radrunita = radrun.add_run(valuep[1])
-            radrunita.font.italic = True
-            radrun.add_run(valuep[2])
-
+            radiation_wavelength = cif['_diffrn_radiation_wavelength']
             crystal_size_min = cif['_exptl_crystal_size_min']
             crystal_size_mid = cif['_exptl_crystal_size_mid']
             crystal_size_max = cif['_exptl_crystal_size_max']
@@ -321,12 +300,29 @@ for page in enumerate(group_of_files):  # one page per three structures:
             ls_wR_factor_ref = cif['_refine_ls_wR_factor_ref']
             diff_density_min = "{0:.2f}".format(round(float(cif['_refine_diff_density_min']), 2))
             diff_density_max = "{0:.2f}".format(round(float(cif['_refine_diff_density_max']), 2))
+
             # now prepare & write all the concatenated & derived cell contents:
             table.cell(17, table_column + 1).text = crystal_size_max + '\u00d7' + \
                                                     crystal_size_mid + '\u00d7' + \
                                                     crystal_size_min
+            radiation_type = radiation_type + ' (\u03bb =' + radiation_wavelength + ')'
+            # TODO: alpha is still \a
+            # radiation_type = radiation_type.replace(" ", "")
+            radtype = radiation_type.partition("K")
+            radrun = table.cell(20, table_column + 1).paragraphs[0]
+            radrun.clear()
+            # radiation type e.g. Mo:
+            radrun.add_run(radtype[0] + ' ')
+            # K line:
+            radrunita = radrun.add_run(radtype[1])
+            radrunita.font.italic = True
+            alpha = radrun.add_run('\u03b1')
+            alpha.font.italic = True
+            alpha.font.subscript = True
+            # wavelength lambda:
+            radrun.add_run(' ' + ''.join(radtype[2].split()[1:]))
             table.cell(21, table_column + 1).text = "{0:.2f}".format(2 * float(theta_min)) + \
-                                         ' to ' + "{0:.2f}".format(2 * float(theta_max))
+                                                    ' to ' + "{0:.2f}".format(2 * float(theta_max))
             table.cell(22, table_column + 1).text = limit_h_min + ' \u2264 h \u2264 ' \
                                                     + limit_h_max + '\n' \
                                                     + limit_k_min + ' \u2264 k \u2264 ' \
@@ -345,7 +341,9 @@ for page in enumerate(group_of_files):  # one page per three structures:
             rintsub2 = rintrun.add_run('sigma')
             rintsub2.font.subscript = True
             rintrun.add_run(' = ' + reflns_av_unetI)
-            table.cell(25, table_column + 1).text = ls_number_reflns + '/' + ls_number_restraints + '/' + ls_number_parameters
+            table.cell(25, table_column + 1).text = ls_number_reflns + '/' \
+                                                    + ls_number_restraints + '/' \
+                                                    + ls_number_parameters
             r2sigrun = table.cell(27, table_column + 1).paragraphs[0]
             r2sigita1 = r2sigrun.add_run('R')
             r2sigita1.font.italic = True
@@ -369,8 +367,7 @@ for page in enumerate(group_of_files):  # one page per three structures:
             rfullsub2.font.subscript = True
             rfullrun.add_run(' = ' + ls_wR_factor_ref)
             table.cell(29, table_column + 1).text = diff_density_max + '/' + diff_density_min
-            print('File parsed: ' + filename + '  (' + ltext + ')  ' + space_group)
-            #break
+            print('File parsed: ' + filename + '  (' + sum_formula + ')  ' + space_group)
 
     for i in enumerate(header_cells):
         if i[0] < 3 and page[1][i[0]] is not None:
