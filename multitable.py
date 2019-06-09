@@ -241,8 +241,14 @@ def make_report_from(files: List):
                 ls_wR_factor_gt = cif['_refine_ls_wR_factor_gt']
                 ls_R_factor_all = cif['_refine_ls_R_factor_all']
                 ls_wR_factor_ref = cif['_refine_ls_wR_factor_ref']
-                diff_density_min = "{0:.2f}".format(round(float(cif['_refine_diff_density_min']), 2))
-                diff_density_max = "{0:.2f}".format(round(float(cif['_refine_diff_density_max']), 2))
+                try:
+                    diff_density_min = "{0:.2f}".format(round(float(cif['_refine_diff_density_min']), 2))
+                except ValueError:
+                    diff_density_min = '?'
+                try:
+                    diff_density_max = "{0:.2f}".format(round(float(cif['_refine_diff_density_max']), 2))
+                except ValueError:
+                    diff_density_max = '?'
 
                 # now prepare & write all the concatenated & derived cell contents:
                 table.cell(17, table_column + 1).text = crystal_size_max + '\u00d7' + \
@@ -322,6 +328,7 @@ def make_report_from(files: List):
 
     print('\nScript finished - output file: multitable.docx')
     document.save('multitable.docx')
+    return nfiles
 
 
 if __name__ == '__main__':

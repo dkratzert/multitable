@@ -42,10 +42,10 @@
       </property>
      </spacer>
     </item>
-    <item row="2" column="0" colspan="4">
-     <widget class="QProgressBar" name="progressBar">
-      <property name="value">
-       <number>0</number>
+    <item row="0" column="3">
+     <widget class="QPushButton" name="removeButton">
+      <property name="text">
+       <string>Remove Current File</string>
       </property>
      </widget>
     </item>
@@ -94,13 +94,6 @@
         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
        </property>
       </widget>
-     </widget>
-    </item>
-    <item row="0" column="3">
-     <widget class="QPushButton" name="removeButton">
-      <property name="text">
-       <string>Remove File</string>
-      </property>
      </widget>
     </item>
    </layout>

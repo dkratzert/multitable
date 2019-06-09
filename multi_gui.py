@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTreeWidgetItem
@@ -7,7 +8,6 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTreeWidgetI
 # This is to make sure that multitable finds the application path even when it is
 # executed from another path e.g. when opened via "open file" in windows:
 import multitable
-from gui.mainwindow import Ui_MultitableWindow
 
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the pyInstaller bootloader
@@ -17,7 +17,8 @@ if getattr(sys, 'frozen', False):
 else:
     application_path = os.path.dirname(os.path.abspath(__file__))
 
-# TODO: Progressbar and exit button
+
+# TODO: exit button
 
 class AppWindow(QMainWindow):
     def __init__(self):
@@ -34,6 +35,17 @@ class AppWindow(QMainWindow):
         self.ui.cif_files_button.clicked.connect(self.add_files_to_list)
         self.ui.removeButton.clicked.connect(self.remove_file)
         self.ui.report_button.clicked.connect(self.make_report)
+        self.ui.CifFileListTreeWidget.itemClicked.connect(self.toggle_remove)
+
+    def toggle_remove(self, selection):
+        selected = False
+        for num in range(0, self.ui.CifFileListTreeWidget.topLevelItemCount()):
+            if self.ui.CifFileListTreeWidget.topLevelItem(num).isSelected():
+                selected = True
+        if selected == True:
+            self.ui.removeButton.setEnabled(True)
+        else:
+            self.ui.removeButton.setDisabled(True)
 
     def add_files_to_list(self, files=None):
         """
@@ -43,7 +55,7 @@ class AppWindow(QMainWindow):
         if not files:
             files = self.get_files_from_dialog()
         if files:
-            self.ui.removeButton.setEnabled(True)
+            #self.ui.removeButton.setEnabled(True)
             self.ui.report_button.setEnabled(True)
         else:
             return
@@ -52,6 +64,7 @@ class AppWindow(QMainWindow):
                 cif_tree_item = QTreeWidgetItem()
                 self.ui.CifFileListTreeWidget.addTopLevelItem(cif_tree_item)
                 cif_tree_item.setText(0, file)
+                #cif_tree_item.currentItemChanged.connect(self.toggle_remove("selected"))
                 # button = QPushButton("remove")
                 # self.ui.CifFileListTreeWidget.setItemWidget(cif_tree_item, 1, button)
                 # button.setMinimumWidth(80)
@@ -73,19 +86,27 @@ class AppWindow(QMainWindow):
         Returns the cif files from a file dialog.
         """
         ciffiles, _ = QFileDialog.getOpenFileNames(filter='*.cif')
-        #print(ciffiles)
+        # print(ciffiles)
         return ciffiles
 
     def make_report(self):
         files_list = []
+        self.ui.OutputTextEdit.clear()
         for num in range(self.ui.CifFileListTreeWidget.topLevelItemCount()):
             item = self.ui.CifFileListTreeWidget.topLevelItem(num)
-            files_list.append(item.text(0))
-            print(item.text(0))  # TODO: is this utf-8 or should I use .data()?
+            itemtxt = item.text(0)
+            files_list.append(itemtxt)
+            self.ui.OutputTextEdit.append(Path(itemtxt).name)
+        if not files_list:
+            return 
         multitable.make_report_from(files_list)
+        self.ui.OutputTextEdit.append('\nReport finished - output file: multitable.docx')
+        self.ui.CifFileListTreeWidget.clear()
+
 
 if __name__ == '__main__':
     uic.compileUiDir(os.path.join(application_path, './gui'))
+    from gui.mainwindow import Ui_MultitableWindow
     app = QApplication(sys.argv)
     w = AppWindow()
     w.show()
