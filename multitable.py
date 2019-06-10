@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import List
 
 from docx import Document
-from docx.shared import Pt
+from docx.enum.style import WD_STYLE_TYPE
+from docx.shared import Pt, RGBColor
 
 # compiled with "Py -3 -m PyInstaller multitable.spec --onefile"
 from cif.fileparser import Cif
@@ -140,7 +141,11 @@ def format_space_group(table, cif, table_column):
     return space_group
 
 
-def make_report_from(files: List):
+def this_or_quest(this):
+    return this if this else '?'
+
+
+def make_report_from(files: List, output_filename=None):
     """
     Creates a tabular cif report.
     :param files: Input cif files a list.
@@ -160,9 +165,15 @@ def make_report_from(files: List):
     # str2Par = '\nPLEASE DOUBLE-CHECK ALL ENTRIES, CIF FILES CAN BE INCOMPLETE!!!'
     # str3Par = '\nParsed files:\n\n' + "\n".join(files)
 
+    # a style for the header:
+    styles = document.styles
+    new_heading_style = styles.add_style('HeaderStyle', WD_STYLE_TYPE.PARAGRAPH)
+    new_heading_style.base_style = styles['Heading 1']
+    font = new_heading_style.font
+    font.color.rgb = RGBColor(0, 0, 0)
     head = document.add_heading(strHead, 1)
-    paragraph_format = head.style.paragraph_format
-    paragraph_format.space_before = Pt(0)
+    head.style = 'HeaderStyle'
+    head.style.paragraph_format.space_before = Pt(0)
     # document.add_paragraph(str1Par)
     # document.add_paragraph(str2Par)
     # document.add_paragraph(str3Par)
@@ -254,10 +265,10 @@ def make_report_from(files: List):
                     diff_density_max = '?'
 
                 # now prepare & write all the concatenated & derived cell contents:
-                table.cell(17, table_column + 1).text = crystal_size_max + '\u00d7' + \
-                                                        crystal_size_mid + '\u00d7' + \
-                                                        crystal_size_min
-                wavelength = str(' (\u03bb =' + radiation_wavelength + ')').replace(' ', '')
+                table.cell(17, table_column + 1).text = this_or_quest(crystal_size_max) + '\u00d7' + \
+                                                        this_or_quest(crystal_size_mid) + '\u00d7' + \
+                                                        this_or_quest(crystal_size_min)
+                wavelength = str(' (\u03bb =' + this_or_quest(radiation_wavelength) + ')').replace(' ', '')
                 # radtype: ('Mo', 'K', '\\a')
                 radtype = list(radiation_type.partition("K"))
                 if len(radtype) > 2:
@@ -288,37 +299,37 @@ def make_report_from(files: List):
                                                         + limit_l_min + ' \u2264 l \u2264 ' \
                                                         + limit_l_max
                 rintrun = table.cell(24, table_column + 1).paragraphs[0]
-                rintrun.add_run(reflns_number_total + '\n')
+                rintrun.add_run(this_or_quest(reflns_number_total) + '\n')
                 rintita1 = rintrun.add_run('R')
                 rintita1.font.italic = True
                 rintsub1 = rintrun.add_run('int')
                 rintsub1.font.subscript = True
-                rintrun.add_run(' = ' + reflns_av_R_equivalents + '\n')
+                rintrun.add_run(' = ' + this_or_quest(reflns_av_R_equivalents) + '\n')
                 rintita2 = rintrun.add_run('R')
                 rintita2.font.italic = True
                 rintsub2 = rintrun.add_run('sigma')
                 rintsub2.font.subscript = True
-                rintrun.add_run(' = ' + reflns_av_unetI)
-                table.cell(25, table_column + 1).text = ls_number_reflns + '/' \
-                                                        + ls_number_restraints + '/' \
-                                                        + ls_number_parameters
+                rintrun.add_run(' = ' + this_or_quest(reflns_av_unetI))
+                table.cell(25, table_column + 1).text = this_or_quest(ls_number_reflns) + '/' \
+                                                        + this_or_quest(ls_number_restraints) + '/' \
+                                                        + this_or_quest(ls_number_parameters)
                 r2sigrun = table.cell(27, table_column + 1).paragraphs[0]
                 r2sigita1 = r2sigrun.add_run('R')
                 r2sigita1.font.italic = True
                 r2sigsub1 = r2sigrun.add_run('1')
                 r2sigsub1.font.subscript = True
-                r2sigrun.add_run(' = ' + ls_R_factor_gt + '\nw')
+                r2sigrun.add_run(' = ' + this_or_quest(ls_R_factor_gt) + '\nw')
                 r2sigita2 = r2sigrun.add_run('R')
                 r2sigita2.font.italic = True
                 r2sigsub2 = r2sigrun.add_run('2')
                 r2sigsub2.font.subscript = True
-                r2sigrun.add_run(' = ' + ls_wR_factor_gt)
+                r2sigrun.add_run(' = ' + this_or_quest(ls_wR_factor_gt))
                 rfullrun = table.cell(28, table_column + 1).paragraphs[0]
                 rfullita1 = rfullrun.add_run('R')
                 rfullita1.font.italic = True
                 rfullsub1 = rfullrun.add_run('1')
                 rfullsub1.font.subscript = True
-                rfullrun.add_run(' = ' + ls_R_factor_all + '\nw')
+                rfullrun.add_run(' = ' + this_or_quest(ls_R_factor_all) + '\nw')
                 rfullita2 = rfullrun.add_run('R')
                 rfullita2.font.italic = True
                 rfullsub2 = rfullrun.add_run('2')
@@ -330,13 +341,17 @@ def make_report_from(files: List):
         for cell in enumerate(header_cells):
             if cell[0] < 3 and page_number[1][cell[0]] is not None:
                 table_column = cell[0] + 1
-                header_cells[table_column].text = Path(page_number[1][cell[0]]).name + '.cif'
+                headcell = header_cells[table_column].paragraphs[0]
+                headcell.add_run(Path(page_number[1][cell[0]]).name + '.cif').bold = True
         # page break between tables:
         if page_number[0] < table_index:
             document.add_page_break()
 
     print('\nScript finished - output file: multitable.docx')
-    document.save('multitable.docx')
+    if not output_filename:
+        document.save('multitable.docx')
+    else:
+        document.save(output_filename)
     return nfiles
 
 

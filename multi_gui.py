@@ -99,8 +99,9 @@ class AppWindow(QMainWindow):
             self.ui.OutputTextEdit.append(Path(itemtxt).name)
         if not files_list:
             return
-        multitable.make_report_from(files_list)
-        self.ui.OutputTextEdit.append('\nReport finished - output file: multitable.docx')
+        output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;', directory='./multitables.docx',initialFilter='*.docx')
+        multitable.make_report_from(files_list, output_filename)
+        self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
         self.ui.CifFileListTreeWidget.clear()
 
 
