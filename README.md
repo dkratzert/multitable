@@ -12,8 +12,7 @@ Usage:
 Notes:
 - 3 structures fit into one table, new pages/tables will be appended until no more structures are left
 - Formatting is very crude, details should be fixed in Word (changing font size, cell spacing, etc.)
-- Subscript and italics in the actual table entries now works (experimental, be careful)
-- For some reason, sometimes special characters are shown as squares. Select all text and set the font again to fix.
+- Sometimes special characters are shown as squares. Select all text and set the font again to fix.
 
 Warning:
-No responsibility taken for errors! There is no sanity check, entries might be missing (e.g. if they are not stored in the cif file or contain unexpected characters).
+No responsibility taken for errors! Missing or invalid cif entries create question marks in the table.
