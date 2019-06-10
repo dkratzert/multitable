@@ -482,7 +482,6 @@ if __name__ == '__main__':
         cifok = cif.parsefile(f.readlines())
     pprint(cif.cif_data)
     # pprint(cif._loop)
-    # TODO: "_space_group_symop_operation_xyz" or '_symmetry_equiv_pos_as_xyz':
     for x in cif.atoms:
         pass
         print(x)

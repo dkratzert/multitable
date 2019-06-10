@@ -2,7 +2,11 @@ import os
 import sys
 from pathlib import Path
 
-from PyQt5 import uic
+DEBUG = False
+
+if DEBUG:
+    from PyQt5 import uic
+
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTreeWidgetItem
 
 # This is to make sure that multitable finds the application path even when it is
@@ -17,8 +21,6 @@ if getattr(sys, 'frozen', False):
 else:
     application_path = os.path.dirname(os.path.abspath(__file__))
 
-
-# TODO: exit button
 
 class AppWindow(QMainWindow):
     def __init__(self):
@@ -55,7 +57,7 @@ class AppWindow(QMainWindow):
         if not files:
             files = self.get_files_from_dialog()
         if files:
-            #self.ui.removeButton.setEnabled(True)
+            # self.ui.removeButton.setEnabled(True)
             self.ui.report_button.setEnabled(True)
         else:
             return
@@ -64,7 +66,7 @@ class AppWindow(QMainWindow):
                 cif_tree_item = QTreeWidgetItem()
                 self.ui.CifFileListTreeWidget.addTopLevelItem(cif_tree_item)
                 cif_tree_item.setText(0, file)
-                #cif_tree_item.currentItemChanged.connect(self.toggle_remove("selected"))
+                # cif_tree_item.currentItemChanged.connect(self.toggle_remove("selected"))
                 # button = QPushButton("remove")
                 # self.ui.CifFileListTreeWidget.setItemWidget(cif_tree_item, 1, button)
                 # button.setMinimumWidth(80)
@@ -99,15 +101,18 @@ class AppWindow(QMainWindow):
             self.ui.OutputTextEdit.append(Path(itemtxt).name)
         if not files_list:
             return
-        output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;', directory='./multitables.docx',initialFilter='*.docx')
+        output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;',
+                                                         directory='./multitables.docx', initialFilter='*.docx')
         multitable.make_report_from(files_list, output_filename)
         self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
         self.ui.CifFileListTreeWidget.clear()
 
 
 if __name__ == '__main__':
-    # uic.compileUiDir(os.path.join(application_path, './gui'))
+    if DEBUG:
+        uic.compileUiDir(os.path.join(application_path, './gui'))
     from gui.mainwindow import Ui_MultitableWindow
+
     app = QApplication(sys.argv)
     w = AppWindow()
     w.show()
