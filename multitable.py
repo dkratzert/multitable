@@ -10,6 +10,7 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Pt, RGBColor
 
 # compiled with "Py -3 -m PyInstaller multitable.spec --onefile"
+
 from cif.fileparser import Cif
 from tools import grouper, isfloat, get_files_from_current_dir, cif_keywords_list
 
@@ -18,7 +19,6 @@ def populate_description_columns(table):
     """
     This Method adds the descriptions to the fist table column.
     """
-    # populate description column:
     lgnd1 = table.cell(1, 0).paragraphs[0]
     lgnd1sub = lgnd1.add_run('Empirical formula')
     lgnd2 = table.cell(2, 0).paragraphs[0]
@@ -125,6 +125,7 @@ def format_space_group(table, cif, table_column):
         if len(space_group) > 4:  # don't modify P 1
             space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
         space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
+        #space_group = re.sub(r'-1', u'\u0031\u0305', space_group)  # exchange -1 with 1bar
         space_group_formated_text = [char for char in space_group]  # ???)
         sgrun = table.cell(5, table_column + 1).paragraphs[0]
         for k in range(0, len(space_group_formated_text)):
@@ -141,14 +142,18 @@ def format_space_group(table, cif, table_column):
     return space_group
 
 
-def this_or_quest(this):
-    return this if this else '?'
+def this_or_quest(value):
+    """
+    Returns the value or a question mark if the value is None.
+    """
+    return value if value else '?'
 
 
-def make_report_from(files: List, output_filename=None):
+def make_report_from(files: List, output_filename: str = None):
     """
     Creates a tabular cif report.
     :param files: Input cif files a list.
+    :param output_filename: the table is saved to this file.
     """
     nfiles = [i.rstrip('.cif') for i in files]  # remove file suffix for display
     group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
@@ -184,7 +189,7 @@ def make_report_from(files: List, output_filename=None):
         document.add_paragraph('')  # cannot format cells directly,
         paragraph = document.paragraphs[-1]  # but it will keep settings from
         paragraph_format = style.paragraph_format  # previous paragraph -> dirty hack:
-        paragraph_format.space_before = Pt(4)  # create paragraph, apply style,
+        paragraph_format.space_before = Pt(2.5)  # create paragraph, apply style,
         paragraph_format.space_after = Pt(0)  # kill paragraph, create table.
         p = paragraph._element
         p.getparent().remove(p)
