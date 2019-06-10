@@ -29,11 +29,14 @@ def populate_description_columns(table):
     lgnd5 = table.cell(5, 0).paragraphs[0]
     lgnd5sub = lgnd5.add_run('Space group')
     lgnd6 = table.cell(6, 0).paragraphs[0]
-    lgnd6sub = lgnd6.add_run('a/\u212B')
+    lgnd6sub = lgnd6.add_run('a').font.italic = True
+    lgnd6.add_run('/\u212B')
     lgnd7 = table.cell(7, 0).paragraphs[0]
-    lgnd7sub = lgnd7.add_run('b/\u212B')
+    lgnd7sub = lgnd7.add_run('b').font.italic = True
+    lgnd7.add_run('/\u212B')
     lgnd8 = table.cell(8, 0).paragraphs[0]
-    lgnd8sub = lgnd8.add_run('c/\u212B')
+    lgnd8sub = lgnd8.add_run('c').font.italic = True
+    lgnd8.add_run('/\u212B')
     lgnd9 = table.cell(9, 0).paragraphs[0]
     lgnd9sub = lgnd9.add_run('\u03B1/\u00b0')
     lgnd10 = table.cell(10, 0).paragraphs[0]
@@ -116,6 +119,7 @@ def format_space_group(table, cif, table_column):
     """
     # The HM space group symbol
     space_group = cif['_space_group_name_H-M_alt']
+    it_number = cif['_space_group_IT_number']
     if space_group:
         if len(space_group) > 4:  # don't modify P 1
             space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
@@ -129,6 +133,8 @@ def format_space_group(table, cif, table_column):
             else:
                 if space_group_formated_text[k - 1].isdigit():
                     sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
+        if it_number:
+            sgrun.add_run(' (' + it_number + ')')
     else:
         space_group = 'no space group'
     return space_group
@@ -141,6 +147,7 @@ def make_report_from(files: List):
     """
     nfiles = [i.rstrip('.cif') for i in files]  # remove file suffix for display
     group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
+    table_index = len(group_of_files) - 1  # n-th table
 
     document = Document()
     style = document.styles['Normal']
@@ -162,9 +169,7 @@ def make_report_from(files: List):
 
     # document.add_page_break()
 
-    lstindex = len(group_of_files) - 1
-
-    for page in enumerate(group_of_files):  # one page per three structures:
+    for page_number in enumerate(group_of_files):  # one page per three structures:
         document.add_paragraph('')  # cannot format cells directly,
         paragraph = document.paragraphs[-1]  # but it will keep settings from
         paragraph_format = style.paragraph_format  # previous paragraph -> dirty hack:
@@ -179,7 +184,7 @@ def make_report_from(files: List):
         sum_formula = 'no sum formula'
 
         # setup table format:
-        for i in range(0, 29):
+        for cell in range(0, 29):
             row = table.add_row()  # define row and cells separately
             for table_column in range(0, 3):
                 row.cells[table_column].style = document.styles['Normal']
@@ -187,11 +192,22 @@ def make_report_from(files: List):
         populate_description_columns(table)
 
         for table_column in range(0, 3):  # the three columns
-            if page[1][table_column]:
-                filename = page[1][table_column] + '.cif'
+            if page_number[1][table_column]:
+                filename = page_number[1][table_column] + '.cif'
                 cif = Cif()
                 with open(filename, 'r') as f:
                     cif.parsefile(f.readlines())
+
+                # Set text for all usual cif keywords:
+                for _, key in enumerate(cif_keywords_list):
+                    cell = table.cell(key[1] + 1, table_column + 1)
+                    if cif[key[0]]:
+                        cell.text = cif[key[0]]
+                    else:
+                        cell.text = '?'
+                        continue
+
+                # Now the special handling:
 
                 # The sum formula:
                 if cif['_chemical_formula_sum']:
@@ -205,19 +221,6 @@ def make_report_from(files: List):
                             formrunsub.font.subscript = True
 
                 space_group = format_space_group(table, cif, table_column)
-
-                # Set text for all usual cif keywords:
-                for _, key in enumerate(cif_keywords_list):
-                    cell = table.cell(key[1] + 1, table_column + 1)
-                    if cif[key[0]]:
-                        # already done:
-                        if key[0] == '_space_group_name_H-M_alt':
-                            continue
-                        cell.text = cif[key[0]]
-                    else:
-                        cell.text = '??'
-                        continue
-
                 radiation_type = cif['_diffrn_radiation_type']
                 radiation_wavelength = cif['_diffrn_radiation_wavelength']
                 crystal_size_min = cif['_exptl_crystal_size_min']
@@ -254,24 +257,30 @@ def make_report_from(files: List):
                 table.cell(17, table_column + 1).text = crystal_size_max + '\u00d7' + \
                                                         crystal_size_mid + '\u00d7' + \
                                                         crystal_size_min
-                radiation_type = radiation_type + ' (\u03bb =' + radiation_wavelength + ')'
-                # TODO: alpha is still \a
-                # radiation_type = radiation_type.replace(" ", "")
-                radtype = radiation_type.partition("K")
+                wavelength = str(' (\u03bb =' + radiation_wavelength + ')').replace(' ', '')
+                # radtype: ('Mo', 'K', '\\a')
+                radtype = list(radiation_type.partition("K"))
+                if len(radtype) > 2:
+                    if radtype[2] == '\\a':
+                        radtype[2] = '\u03b1'
+                    if radtype[2] == '\\b':
+                        radtype[2] = '\u03b2'
                 radrun = table.cell(20, table_column + 1).paragraphs[0]
-                radrun.clear()
                 # radiation type e.g. Mo:
-                radrun.add_run(radtype[0] + ' ')
+                radrun.add_run(radtype[0])
                 # K line:
                 radrunita = radrun.add_run(radtype[1])
                 radrunita.font.italic = True
-                alpha = radrun.add_run('\u03b1')
+                alpha = radrun.add_run(radtype[2])
                 alpha.font.italic = True
                 alpha.font.subscript = True
                 # wavelength lambda:
-                radrun.add_run(' ' + ''.join(radtype[2].split()[1:]))
-                table.cell(21, table_column + 1).text = "{0:.2f}".format(2 * float(theta_min)) + \
-                                                        ' to ' + "{0:.2f}".format(2 * float(theta_max))
+                radrun.add_run(' ' + wavelength)
+                try:
+                    table.cell(21, table_column + 1).text = "{0:.2f}".format(2 * float(theta_min)) + \
+                                                            ' to ' + "{0:.2f}".format(2 * float(theta_max))
+                except ValueError:
+                    table.cell(21, table_column + 1).text = '? to ?'
                 table.cell(22, table_column + 1).text = limit_h_min + ' \u2264 h \u2264 ' \
                                                         + limit_h_max + '\n' \
                                                         + limit_k_min + ' \u2264 k \u2264 ' \
@@ -318,12 +327,12 @@ def make_report_from(files: List):
                 table.cell(29, table_column + 1).text = diff_density_max + '/' + diff_density_min
                 print('File parsed: ' + filename + '  (' + sum_formula + ')  ' + space_group)
 
-        for i in enumerate(header_cells):
-            if i[0] < 3 and page[1][i[0]] is not None:
-                table_column = i[0] + 1
-                header_cells[table_column].text = Path(page[1][i[0]]).name + '.cif'
+        for cell in enumerate(header_cells):
+            if cell[0] < 3 and page_number[1][cell[0]] is not None:
+                table_column = cell[0] + 1
+                header_cells[table_column].text = Path(page_number[1][cell[0]]).name + '.cif'
         # page break between tables:
-        if page[0] < lstindex:
+        if page_number[0] < table_index:
             document.add_page_break()
 
     print('\nScript finished - output file: multitable.docx')
