@@ -106,7 +106,7 @@ class AppWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    uic.compileUiDir(os.path.join(application_path, './gui'))
+    # uic.compileUiDir(os.path.join(application_path, './gui'))
     from gui.mainwindow import Ui_MultitableWindow
     app = QApplication(sys.argv)
     w = AppWindow()

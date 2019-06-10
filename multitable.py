@@ -128,13 +128,17 @@ def format_space_group(table, cif, table_column):
         #space_group = re.sub(r'-1', u'\u0031\u0305', space_group)  # exchange -1 with 1bar
         space_group_formated_text = [char for char in space_group]  # ???)
         sgrun = table.cell(5, table_column + 1).paragraphs[0]
+        is_sub = False
         for k in range(0, len(space_group_formated_text)):
             sgrunsub = sgrun.add_run(space_group_formated_text[k])
             if not space_group_formated_text[k].isdigit():
                 sgrunsub.font.italic = True
             else:
-                if space_group_formated_text[k - 1].isdigit():
+                if space_group_formated_text[k - 1].isdigit() and not is_sub:
+                    is_sub = True
                     sgrunsub.font.subscript = True  # lowercase the second digit if previous is also digit
+                else:
+                    is_sub = False  # only every second number as subscript for P212121 etc.
         if it_number:
             sgrun.add_run(' (' + it_number + ')')
     else:
