@@ -3,10 +3,10 @@
 block_cipher = None
 
 
-a = Analysis(['multi_gui.py'],
+a = Analysis(['multitable.py'],
              pathex=['D:\\Programme\\Windows Kits\\10\\Redist\\ucrt\\DLLs\\x64', 'D:\\GitHub\\multitable'],
              binaries=[],
-             datas=[('gui', 'gui'), ('templates', 'templates')],
+             datas=[('templates', 'templates')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -15,18 +15,19 @@ a = Analysis(['multi_gui.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
+
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
           a.zipfiles,
           a.datas,
           [],
-          name='Multitable',
+          name='multitable',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          runtime_tmpdir=None,
           console=True )

@@ -105,7 +105,7 @@ class AppWindow(QMainWindow):
             return
         output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;',
                                                          caption="Save Table To",
-                                                         directory='./multitables.docx',
+                                                         directory='./multitable.docx',
                                                          initialFilter='*.docx')
         multitable.make_report_from(files_list, output_filename)
         self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
