@@ -1,12 +1,15 @@
 # -*- mode: python -*-
 
-block_cipher = None
+import sys
+from os import path
 
+block_cipher = None
+site_packages = next(p for p in sys.path if 'site-packages' in p)
 
 a = Analysis(['multitable.py'],
              pathex=['D:\\Programme\\Windows Kits\\10\\Redist\\ucrt\\DLLs\\x64', 'D:\\GitHub\\multitable'],
              binaries=[],
-             datas=[('templates', 'templates')],
+             datas=[(path.join(site_packages,"docx","templates"), 'docx/templates')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -30,4 +33,5 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
+          runtime_tmpdir=None,
           console=True )

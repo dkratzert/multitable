@@ -158,7 +158,7 @@ def make_report_from(files: List, output_filename: str = None):
     group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
     table_index = len(group_of_files) - 1  # n-th table
 
-    document = Document('./templates/default.docx')
+    document = Document()
 
     style = document.styles['Normal']
     font = style.font
