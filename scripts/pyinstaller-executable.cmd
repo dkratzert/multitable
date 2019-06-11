@@ -1,12 +1,11 @@
 cd ..
-venv\Scripts\pyinstaller.exe --clean ^
+venv_py\Scripts\pyinstaller.exe --clean ^
                                 --add-data="gui;gui" ^
-                                rem --add-data="icons;icons" ^
-                                rem --hidden-import PyQt5.sip ^
-                                rem -n StructureFinder ^
+                                -p "D:\Programme\Windows Kits\10\Redist\ucrt\DLLs\x64" ^
+                                --add-data="templates;templates" ^
                                 -y ^
-                                rem -i "icons/strf.ico" ^
-                                --windowed ^
+                                -n Multitable_gui ^
+                                -F ^
                                 multi_gui.py
-exit
+rem exit
 

@@ -117,6 +117,9 @@ if __name__ == '__main__':
         uic.compileUiDir(os.path.join(application_path, './gui'))
     from gui.mainwindow import Ui_MultitableWindow
 
+    # Trick to make pyinstaller work: 
+    p = Path('templates/default.docx')
+    
     app = QApplication(sys.argv)
     w = AppWindow()
     w.show()

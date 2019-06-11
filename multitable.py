@@ -12,9 +12,9 @@ from docx.shared import Pt, RGBColor
 from cif.fileparser import Cif
 from tools import grouper, isfloat, get_files_from_current_dir, cif_keywords_list, this_or_quest
 
-
 # compiled with "Py -3 -m PyInstaller multitable.spec --onefile"
 
+# TODO: Add Flack x
 
 def populate_description_columns(table):
     """
@@ -157,7 +157,12 @@ def make_report_from(files: List, output_filename: str = None):
     group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
     table_index = len(group_of_files) - 1  # n-th table
 
-    document = Document()
+    # TODO: This needs more attention. 
+    #  docx says:
+    #  docx.opc.exceptions.PackageNotFoundError: Package not found at 
+    #  'C:\Users\daniel\AppData\Local\Temp\_MEI243282\docx\templates\default.docx'
+    #  maybe make own temporary file instance of the template at program start?
+    document = Document('templates/default.docx')
     style = document.styles['Normal']
     font = style.font
     font.name = 'Callibri'
