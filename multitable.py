@@ -9,10 +9,11 @@ from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Pt, RGBColor
 
-# compiled with "Py -3 -m PyInstaller multitable.spec --onefile"
-
 from cif.fileparser import Cif
-from tools import grouper, isfloat, get_files_from_current_dir, cif_keywords_list
+from tools import grouper, isfloat, get_files_from_current_dir, cif_keywords_list, this_or_quest
+
+
+# compiled with "Py -3 -m PyInstaller multitable.spec --onefile"
 
 
 def populate_description_columns(table):
@@ -125,7 +126,7 @@ def format_space_group(table, cif, table_column):
         if len(space_group) > 4:  # don't modify P 1
             space_group = re.sub(r'\s1', '', space_group)  # remove extra Hall "1" for mono and tric
         space_group = re.sub(r'\s', '', space_group)  # remove all remaining whitespace
-        #space_group = re.sub(r'-1', u'\u0031\u0305', space_group)  # exchange -1 with 1bar
+        # space_group = re.sub(r'-1', u'\u0031\u0305', space_group)  # exchange -1 with 1bar
         space_group_formated_text = [char for char in space_group]  # ???)
         sgrun = table.cell(5, table_column + 1).paragraphs[0]
         is_sub = False
@@ -144,13 +145,6 @@ def format_space_group(table, cif, table_column):
     else:
         space_group = 'no space group'
     return space_group
-
-
-def this_or_quest(value):
-    """
-    Returns the value or a question mark if the value is None.
-    """
-    return value if value else '?'
 
 
 def make_report_from(files: List, output_filename: str = None):

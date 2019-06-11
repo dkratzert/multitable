@@ -68,3 +68,10 @@ def get_files_from_current_dir():
         if f.endswith('.cif'):
             files.append(f)
     return files
+
+
+def this_or_quest(value):
+    """
+    Returns the value or a question mark if the value is None.
+    """
+    return value if value else '?'

@@ -87,7 +87,9 @@ class AppWindow(QMainWindow):
         """
         Returns the cif files from a file dialog.
         """
-        ciffiles, _ = QFileDialog.getOpenFileNames(filter='*.cif')
+        ciffiles, _ = QFileDialog.getOpenFileNames(filter='CIF files (*.cif, *.CIF);;All Files (*.*)',
+                                                   initialFilter='*.cif',
+                                                   caption='Open .cif Files')
         # print(ciffiles)
         return ciffiles
 
@@ -102,7 +104,9 @@ class AppWindow(QMainWindow):
         if not files_list:
             return
         output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;',
-                                                         directory='./multitables.docx', initialFilter='*.docx')
+                                                         caption="Save Table To",
+                                                         directory='./multitables.docx',
+                                                         initialFilter='*.docx')
         multitable.make_report_from(files_list, output_filename)
         self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
         self.ui.CifFileListTreeWidget.clear()
