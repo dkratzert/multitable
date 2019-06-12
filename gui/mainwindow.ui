@@ -81,7 +81,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QTreeWidget" name="CifFileListTreeWidget">
+         <widget class="QListWidget" name="CifFileListListWidget">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -91,20 +91,18 @@
           <property name="locale">
            <locale language="English" country="UnitedStates"/>
           </property>
-          <property name="itemsExpandable">
-           <bool>true</bool>
-          </property>
-          <property name="sortingEnabled">
-           <bool>true</bool>
-          </property>
-          <attribute name="headerVisible">
+          <property name="dragEnabled">
            <bool>false</bool>
-          </attribute>
-          <column>
-           <property name="text">
-            <string notr="true">1</string>
-           </property>
-          </column>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::DragDrop</enum>
+          </property>
+          <property name="defaultDropAction">
+           <enum>Qt::MoveAction</enum>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
