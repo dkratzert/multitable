@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     from PyQt5 import uic
