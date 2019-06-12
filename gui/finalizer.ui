@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MultitableWindow</class>
+ <widget class="QMainWindow" name="MultitableWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1151</width>
+    <height>669</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Mutitable</string>
+  </property>
+  <widget class="QWidget" name="Mainwidget">
+   <widget class="QTabWidget" name="MainTabWidget">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>10</y>
+      <width>791</width>
+      <height>621</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>1</number>
+    </property>
+    <property name="elideMode">
+     <enum>Qt::ElideNone</enum>
+    </property>
+    <widget class="QWidget" name="SelectFilesTab">
+     <attribute name="title">
+      <string>Select Files</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="SelectDataTab">
+     <attribute name="title">
+      <string>Select Data</string>
+     </attribute>
+     <widget class="QTableWidget" name="tableWidget">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>741</width>
+        <height>561</height>
+       </rect>
+      </property>
+      <row>
+       <property name="text">
+        <string>_ls_refine_foo_bar</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>_WR_foo</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>dsrgdg</string>
+       </property>
+      </row>
+      <column>
+       <property name="text">
+        <string>CIF data</string>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>own data</string>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+      </column>
+      <item row="0" column="0">
+       <property name="text">
+        <string>?</string>
+       </property>
+       <property name="flags">
+        <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+       </property>
+      </item>
+      <item row="0" column="1">
+       <property name="text">
+        <string>125</string>
+       </property>
+      </item>
+      <item row="1" column="0">
+       <property name="text">
+        <string>10.4</string>
+       </property>
+      </item>
+      <item row="1" column="1">
+       <property name="text">
+        <string>12.6</string>
+       </property>
+      </item>
+      <item row="2" column="1">
+       <property name="text">
+        <string>highlight filed that should be used</string>
+       </property>
+      </item>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="WriteFilesTab">
+     <attribute name="title">
+      <string>Write Files</string>
+     </attribute>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>311</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Cif file</string>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLineEdit" name="lineEdit"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Select File</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>70</y>
+      <width>321</width>
+      <height>211</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Templates</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QTreeWidget" name="treeWidget_2">
+       <column>
+        <property name="text">
+         <string>list of available templates here...</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QPushButton" name="pushButton_2">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>580</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save Cif File</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_3">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>580</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save Report</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_4">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>580</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save Tables</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1151</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSave_Report"/>
+    <addaction name="actionSave_CIF_File"/>
+   </widget>
+   <widget class="QMenu" name="menuoptions">
+    <property name="title">
+     <string>options</string>
+    </property>
+    <addaction name="actionedit_templates"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuoptions"/>
+  </widget>
+  <action name="actionSave_Report">
+   <property name="text">
+    <string>Save Report</string>
+   </property>
+  </action>
+  <action name="actionSave_CIF_File">
+   <property name="text">
+    <string>Save CIF File</string>
+   </property>
+  </action>
+  <action name="actionedit_templates">
+   <property name="text">
+    <string>edit templates</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
