@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     from PyQt5 import uic
@@ -27,7 +27,6 @@ class AppWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MultitableWindow()
         self.ui.setupUi(self)
-        self.show()
         self.ui.report_button.setDisabled(True)
         self.ui.removeButton.setDisabled(True)
         self.connect_signals_and_slots()
