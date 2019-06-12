@@ -7,7 +7,7 @@ DEBUG = True
 if DEBUG:
     from PyQt5 import uic
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QListWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QListWidgetItem, QAbstractItemView
 
 # This is to make sure that multitable finds the application path even when it is
 # executed from another path e.g. when opened via "open file" in windows:
@@ -31,6 +31,8 @@ class AppWindow(QMainWindow):
         self.ui.report_button.setDisabled(True)
         self.ui.removeButton.setDisabled(True)
         self.connect_signals_and_slots()
+        # Important for Drag&Drop action without delete:
+        self.ui.CifFileListListWidget.setDragDropMode(QAbstractItemView.InternalMove)
 
     def connect_signals_and_slots(self):
         self.ui.cif_files_button.clicked.connect(self.add_files_to_list)

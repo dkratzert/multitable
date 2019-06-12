@@ -82,27 +82,30 @@
         </property>
         <item>
          <widget class="QListWidget" name="CifFileListListWidget">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>4</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="locale">
-           <locale language="English" country="UnitedStates"/>
-          </property>
-          <property name="dragEnabled">
-           <bool>false</bool>
-          </property>
           <property name="dragDropMode">
            <enum>QAbstractItemView::DragDrop</enum>
           </property>
           <property name="defaultDropAction">
-           <enum>Qt::MoveAction</enum>
+           <enum>Qt::CopyAction</enum>
           </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
+          <item>
+           <property name="text">
+            <string>foo</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>bar</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>baz</string>
+           </property>
+          </item>
          </widget>
         </item>
        </layout>
