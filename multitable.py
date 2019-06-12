@@ -114,6 +114,8 @@ def populate_description_columns(table):
     lgnd29sub = lgnd29.add_run('Largest peak/hole /e\u212B')
     lgnd29sub1 = lgnd29.add_run('3')
     lgnd29sub1.font.superscript = True
+    lgnd30 = table.cell(30, 0).paragraphs[0]
+    lgnd30sub = lgnd30.add_run('Flack x parameter')
 
 
 def format_space_group(table, cif, table_column):
@@ -200,7 +202,7 @@ def make_report_from(files: List, output_filename: str = None):
         sum_formula = 'no sum formula'
 
         # setup table format:
-        for cell in range(0, 29):
+        for cell in range(0, 30):
             row = table.add_row()  # define row and cells separately
             for table_column in range(0, 3):
                 row.cells[table_column].style = document.styles['Normal']
@@ -341,6 +343,7 @@ def make_report_from(files: List, output_filename: str = None):
                 rfullsub2.font.subscript = True
                 rfullrun.add_run(' = ' + ls_wR_factor_ref)
                 table.cell(29, table_column + 1).text = diff_density_max + '/' + diff_density_min
+                table.cell(30, table_column + 1).text = cif['_refine_ls_abs_structure_Flack']
                 print('File parsed: ' + filename + '  (' + sum_formula + ')  ' + space_group)
 
         for cell in enumerate(header_cells):

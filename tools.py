@@ -45,7 +45,9 @@ cif_keywords_list = (
     #['_refine_ls_R_factor_all', 27],
     #['_refine_ls_wR_factor_ref', 27],
     #['_refine_diff_density_max', 28],
-    #['_refine_diff_density_min', 28]
+    #['_refine_diff_density_min', 28],
+    #['_refine_ls_abs_structure_Flack', 29]
+
 )
 
 
