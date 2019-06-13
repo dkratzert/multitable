@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/Users/daniel/GitHub/multitable/./gui/mainwindow.ui'
+# Form implementation generated from reading ui file 'D:\GitHub\multitable\./gui\mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.2
 #
