@@ -18,7 +18,7 @@ else:
 
 if DEBUG:
     uic.compileUiDir(os.path.join(application_path, './gui'))
-from gui.finalizer import Ui_FinalizerWindow
+from gui.finalcif_gui import Ui_FinalCifWindow
 
 
 """
@@ -49,6 +49,10 @@ TODO:
 - SaveResidualsTableButton -> run multitable.py
 - SaveFullReportButton -> generate full report with description text and all tables as .docx (and pdf?)
   maybe also a preview? Directly open in MSword/LibreOffice?
+- prioritise The cif items with "necessary for checkcif" like "crystal habit", less important but generally accepted
+  as needed like "publication picture program" and unimportant "like melting point". 
+- Dropdown menu for colors, software versions, ...
+- Template editor for colors, software, ...  with predefined values.
 
 - save cif file with "name_fin.cif"
 
@@ -60,7 +64,7 @@ TODO:
 class AppWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.ui = Ui_FinalizerWindow()
+        self.ui = Ui_FinalCifWindow()
         self.ui.setupUi(self)
         self.show()
         # distribute CifItemsTable Columns evenly:
@@ -88,5 +92,6 @@ class AppWindow(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = AppWindow()
-    w.showMaximized()
+    #w.showMaximized()  # For full screen view
+    w.setBaseSize(1200, 780)
     sys.exit(app.exec_())
