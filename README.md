@@ -1,6 +1,6 @@
 # multitable
 
-A crude python script translating multiple cif crystal structure files into a multi-page MS Word (docx) formatted crystallographic table.
+A python script translating multiple cif crystal structure files into a multi-page MS Word (docx) formatted crystallographic table.
 This is especially useful for manuscripts containing many structures.
 
 Usage:
@@ -20,3 +20,7 @@ Notes:
 
 Warning:
 No responsibility taken for errors! Missing or invalid cif entries create question marks in the table.
+
+
+The original Idea of this project was realized by Nils Trapp. Major modifications and an
+additional graphical user interface were made by Daniel Kratzert.
