@@ -7,7 +7,7 @@ from typing import List
 
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt, RGBColor, Cm
 
 from cif.fileparser import Cif
 from tools import grouper, isfloat, get_files_from_current_dir, cif_keywords_list, this_or_quest
@@ -55,6 +55,7 @@ def populate_description_columns(table):
     lgnd13sub.font.italic = True
     lgnd14 = table.cell(14, 0).paragraphs[0]
     lgnd14sub = lgnd14.add_run('\u03C1')
+    lgnd14sub.font.italic = True
     lgnd14sub1 = lgnd14.add_run('calc')
     lgnd14sub1.font.subscript = True
     lgnd14sub2 = lgnd14.add_run(' g/cm')
@@ -87,7 +88,7 @@ def populate_description_columns(table):
     lgnd24 = table.cell(24, 0).paragraphs[0]
     lgnd24sub = lgnd24.add_run('Independent reflections')
     lgnd25 = table.cell(25, 0).paragraphs[0]
-    lgnd25sub = lgnd25.add_run('Data/Restraints/Parameters')
+    lgnd25sub = lgnd25.add_run('Data / Restraints / Param.')
     lgnd26 = table.cell(26, 0).paragraphs[0]
     lgnd26sub = lgnd26.add_run('Goodness-of-fit on ')
     lgnd26sub1 = lgnd26.add_run('F')
@@ -98,7 +99,7 @@ def populate_description_columns(table):
     lgnd27sub = lgnd27.add_run('Final ')
     lgnd27sub1 = lgnd27.add_run('R')
     lgnd27sub1.font.italic = True
-    lgnd27sub2 = lgnd27.add_run(' indexes [')
+    lgnd27sub2 = lgnd27.add_run(' indexes \n[')
     lgnd27sub3 = lgnd27.add_run('I')
     lgnd27sub3.font.italic = True
     lgnd27sub4 = lgnd27.add_run('\u22652\u03C3(')
@@ -109,7 +110,7 @@ def populate_description_columns(table):
     lgnd28sub = lgnd28.add_run('Final ')
     lgnd28sub1 = lgnd28.add_run('R')
     lgnd28sub1.font.italic = True
-    lgnd28sub2 = lgnd28.add_run(' indexes [all data]')
+    lgnd28sub2 = lgnd28.add_run(' indexes \n[all data]')
     lgnd29 = table.cell(29, 0).paragraphs[0]
     lgnd29sub = lgnd29.add_run('Largest peak/hole /e\u212B')
     lgnd29sub1 = lgnd29.add_run('3')
@@ -198,6 +199,17 @@ def make_report_from(files: List, output_filename: str = None):
         p._p = p._element = None
         table = document.add_table(rows=1, cols=4)
         header_cells = table.rows[0].cells
+        table.autofit = False
+        col = table.columns[0]
+        col.width=Cm(4.5)
+        #col.autofit = True
+        col = table.columns[1]
+        col.width=Cm(3.4)
+        col = table.columns[2]
+        col.width = Cm(3.4)
+        col = table.columns[3]
+        col.width = Cm(3.4)
+
 
         sum_formula = 'no sum formula'
 
