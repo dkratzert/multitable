@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     from PyQt5 import uic
@@ -53,7 +53,7 @@ class AppWindow(QMainWindow):
         """
         Add files to the files list.
         """
-        self.ui.CifFileListListWidget.clear()
+        #self.ui.CifFileListListWidget.clear()  # make multiple add possible.
         if not files:
             files = self.get_files_from_dialog()
         if files:
@@ -79,8 +79,8 @@ class AppWindow(QMainWindow):
         """
         Returns the cif files from a file dialog.
         """
-        ciffiles, _ = QFileDialog.getOpenFileNames(filter='CIF files (*.cif, *.CIF);;All Files (*.*)',
-                                                   initialFilter='*.cif',
+        ciffiles, _ = QFileDialog.getOpenFileNames(filter='CIF files (*.cif, *.CIF);; All Files (*.*,)',
+                                                   #initialFilter='*.cif, *.CIF',
                                                    caption='Open .cif Files')
         # print(ciffiles)
         return ciffiles
@@ -97,8 +97,8 @@ class AppWindow(QMainWindow):
             return
         output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;',
                                                          caption="Save Table To",
-                                                         directory='./multitable.docx',
-                                                         initialFilter='*.docx')
+                                                         directory='./multitable.docx')
+                                                         #initialFilter='*.docx')
         multitable.make_report_from(files_list, output_filename)
         self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
         self.ui.CifFileListListWidget.clear()
