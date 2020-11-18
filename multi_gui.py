@@ -1,6 +1,9 @@
 import os
+import subprocess
 import sys
 from pathlib import Path
+
+import multitable2
 
 DEBUG = False
 
@@ -11,7 +14,6 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QListWidgetI
 
 # This is to make sure that multitable finds the application path even when it is
 # executed from another path e.g. when opened via "open file" in windows:
-import multitable
 
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the pyInstaller bootloader
@@ -53,7 +55,7 @@ class AppWindow(QMainWindow):
         """
         Add files to the files list.
         """
-        #self.ui.CifFileListListWidget.clear()  # make multiple add possible.
+        # self.ui.CifFileListListWidget.clear()  # make multiple add possible.
         if not files:
             files = self.get_files_from_dialog()
         if files:
@@ -80,10 +82,17 @@ class AppWindow(QMainWindow):
         Returns the cif files from a file dialog.
         """
         ciffiles, _ = QFileDialog.getOpenFileNames(filter='CIF files (*.cif, *.CIF);; All Files (*.*,)',
-                                                   #initialFilter='*.cif, *.CIF',
+                                                   # initialFilter='*.cif, *.CIF',
                                                    caption='Open .cif Files')
         # print(ciffiles)
         return ciffiles
+
+    def open_report_document(self, report_filename: str):
+        if Path(report_filename).absolute().exists():
+            if os.name == 'nt':
+                os.startfile(Path(report_filename).absolute())
+            if sys.platform == 'darwin':
+                subprocess.call(['open', Path(report_filename).absolute()])
 
     def make_report(self):
         files_list = []
@@ -91,16 +100,17 @@ class AppWindow(QMainWindow):
         for num in range(self.ui.CifFileListListWidget.count()):
             item = self.ui.CifFileListListWidget.item(num)
             itemtxt = item.text()
-            files_list.append(itemtxt)
+            files_list.append(Path(itemtxt))
             self.ui.OutputTextEdit.append(Path(itemtxt).name)
         if not files_list:
             return
         output_filename, _ = QFileDialog.getSaveFileName(filter='MS Word Documents (*.docx);;',
                                                          caption="Save Table To",
                                                          directory='./multitable.docx')
-                                                         #initialFilter='*.docx')
-        multitable.make_report_from(files_list, output_filename)
+        # initialFilter='*.docx')
+        multitable2.make_report_from(files_list, output_filename)
         self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
+        self.open_report_document(output_filename)
         self.ui.CifFileListListWidget.clear()
 
 

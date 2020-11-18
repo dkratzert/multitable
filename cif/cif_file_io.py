@@ -6,16 +6,10 @@
 #  Dr. Daniel Kratzert
 #  ----------------------------------------------------------------------------
 import re
-from math import sin, cos, sqrt
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import gemmi
-
-from cif.cif_order import order, special_keys
-from datafiles.utils import DSRFind
-from tools.dsrmath import mean
-from tools.misc import essential_keys, non_centrosymm_keys, get_error_from_value
 
 
 class CifContainer():
@@ -23,8 +17,14 @@ class CifContainer():
     This class holds the content of a cif file, independent of the file parser used.
     """
 
-    def __init__(self, file: Path):
-        self.fileobj = file
+    def __init__(self, file: Union[Path, str]):
+        self.fileobj: Path
+        if isinstance(file, str):
+            self.fileobj = Path(file)
+        elif isinstance(file, Path):
+            self.fileobj = file
+        else:
+            raise TypeError('The file parameter must be string or Path object.')
         # I do this in small steps instead of gemmi.cif.read_file() in order to
         # leave out the check_for_missing_values. This was gemmi reads cif files
         # with missing values.
@@ -32,21 +32,17 @@ class CifContainer():
         self.block = self.doc.sole_block()
         # will not ok with non-ascii characters in the res file:
         self.chars_ok = True
-        d = DSRFind(self.res_file_data)
         self.doc.check_for_duplicates()
         self.hkl_extra_info = self.abs_hkl_details()
-        self.order = order
-        self.dsr_used = d.dsr_used
         self.atomic_struct = gemmi.make_small_structure_from_block(self.block)
         # A dictionary to convert Atom names like 'C1_2' or 'Ga3' into Element names like 'C' or 'Ga'
         self._name2elements = dict(
-            zip(self.block.find_loop('_atom_site_label'), self.block.find_loop('_atom_site_type_symbol')))
+            zip([x.upper() for x in self.block.find_loop('_atom_site_label')],
+                [x.upper() for x in self.block.find_loop('_atom_site_type_symbol')]))
 
     def read_file(self, path: str) -> gemmi.cif.Document:
         """
         Reads a cif file and returns a gemmi document object.
-        :param path: path to the file
-        :return: gemmi document
         """
         doc = gemmi.cif.Document()
         # support for platon squeeze files:
@@ -69,12 +65,25 @@ class CifContainer():
         doc.parse_string(cif_string)
         return doc
 
+    def cif_as_string(self, without_hkl=False) -> str:
+        if not without_hkl:
+            return self.doc.as_string(style=gemmi.cif.Style.Indent35)
+        else:
+            doc = gemmi.cif.Document()
+            doc.parse_string(self.doc.as_string(style=gemmi.cif.Style.Indent35))
+            block = doc.sole_block()
+            block.find_pair_item('_shelx_hkl_file').erase()
+            return doc.as_string(style=gemmi.cif.Style.Indent35)
+
+    def __str__(self):
+        return 'Cif object: ' + str(self.fileobj.absolute())
+
     def __getitem__(self, item: str) -> str:
         result = self.block.find_value(item)
         if result:
             if result == '?' or result == "'?'":
                 return ''
-            # TODO: can I do this?:
+            # can I do this? No:
             # return retranslate_delimiter(result)
             return gemmi.cif.as_string(result)
         else:
@@ -94,26 +103,8 @@ class CifContainer():
         """
         if not filename:
             filename = str(self.fileobj.absolute())
-        self.order_cif_keys()
         self.doc.write_file(filename, gemmi.cif.Style.Indent35)
         # Path(filename).write_text(self.doc.as_string(gemmi.cif.Style.Indent35))
-
-    def order_cif_keys(self):
-        """
-        Brings the current CIF in the specific order of the order list.
-        """
-        for key in reversed(self.order):
-            try:
-                self.block.move_item(self.block.get_index(key), 0)
-            except RuntimeError:
-                pass
-                # print('Not in list:', key)
-        # make sure hkl file and res file are at the end if the cif file:
-        for key in special_keys:
-            try:
-                self.block.move_item(self.block.get_index(key), -1)
-            except RuntimeError:
-                continue
 
     @property
     def res_file_data(self) -> str:
@@ -219,70 +210,6 @@ class CifContainer():
     def absorpt_correction_T_min(self) -> str:
         return self.hkl_extra_info['_exptl_absorpt_correction_T_min']
 
-    @property
-    def bond_precision(self):
-        """
-        This method is unfinished and might result in wrong numbers!
-        """
-        a, aerror = get_error_from_value(self['_cell_length_a'])
-        b, berror = get_error_from_value(self['_cell_length_b'])
-        c, cerror = get_error_from_value(self['_cell_length_c'])
-        alpha, sigalpha = get_error_from_value(self['_cell_angle_alpha'])
-        beta, sigbeta = get_error_from_value(self['_cell_angle_beta'])
-        gamma, siggamma = get_error_from_value(self['_cell_angle_gamma'])
-        A1 = aerror / a
-        A2 = berror / b
-        A3 = cerror / c
-        # B1 = sin(alpha) * (cos(alpha) - cos(beta) * cos(gamma)) * sigalpha
-        # B2 = sin(beta) * (cos(beta) - cos(alpha) * cos(gamma)) * sigbeta
-        # B3 = sin(gamma) * (cos(gamma) - cos(alpha) * cos(beta)) * siggamma
-        name2coords = dict([(x[0], (x[2], x[3], x[4])) for x in self.atoms()])
-        name2part = dict([(x[0], x[5]) for x in self.atoms()])
-        count = 0
-        bonderrors = []
-        bb = 0.0
-        pair = ('C')
-        for bond in self.bonds(without_h=True):
-            atom1 = bond[0]
-            atom2 = bond[1]
-            if 'B' in atom1 or 'B' in atom2:
-                continue
-            if name2part[atom1] != '.' or name2part[atom2] != '.':
-                continue
-            if self.iselement(atom1) in pair and self.iselement(atom2) in pair:
-                dist, error = get_error_from_value(bond[2])
-                x1, sig_x1 = get_error_from_value(name2coords[atom1][0])
-                y1, sig_y1 = get_error_from_value(name2coords[atom1][1])
-                z1, sig_z1 = get_error_from_value(name2coords[atom1][2])
-                x2, sig_x2 = get_error_from_value(name2coords[atom2][0])
-                y2, sig_y2 = get_error_from_value(name2coords[atom2][1])
-                z2, sig_z2 = get_error_from_value(name2coords[atom2][2])
-                delta1 = a * (x1 - x2)
-                delta2 = b * (y1 - y2)
-                delta3 = c * (z1 - z2)
-                sigd = (
-                               (delta1 + delta2 * cos(gamma) + delta3 * cos(beta)) ** 2 * (
-                               delta1 ** 2 * A1 ** 2 + a ** 2 * (sig_x1 ** 2 + sig_x2 ** 2))
-                               + (delta1 * cos(gamma) + delta2 + delta3 * cos(alpha)) ** 2 * (
-                                       delta2 ** 2 * A2 ** 2 + b ** 2 * (sig_y1 ** 2 + sig_y2 ** 2))
-                               + (delta1 * cos(beta) + delta2 * cos(alpha) + delta3) ** 2 * (
-                                       delta3 ** 2 * A3 ** 2 + c ** 2 * (sig_z1 ** 2 + sig_z2 ** 2))
-                               + ((delta1 * delta2 * siggamma * sin(gamma)) ** 2 +
-                                  (delta1 * delta3 * sigbeta * sin(beta)) ** 2 +
-                                  (delta2 * delta3 * sigalpha * sin(alpha)) ** 2)) / dist ** 2
-                # The error is too large:
-                sigd = sqrt(sigd)
-                bb += sigd
-                if sigd > 0.0001:
-                    count += 1
-                    # print(atom1, atom2, dist, round(error, 5), round(sigd, 4), round(bb, 5), count)
-                    # print('------ dist - sigma - calcsig - sum - num')
-                    bonderrors.append(sigd)
-        if len(bonderrors) > 2:
-            return round(mean(bonderrors), 5)
-        else:
-            return 0.0
-
     def _spgr(self) -> gemmi.SpaceGroup:
         if self.symmops:
             symm_ops = self.symmops
@@ -300,7 +227,7 @@ class CifContainer():
             return self._spgr().xhm()
         except (AttributeError, RuntimeError):
             if self['_space_group_name_H-M_alt']:
-                return self['_space_group_name_H-M_alt'].strip("'")
+                return gemmi.cif.as_string(self['_space_group_name_H-M_alt'])
             else:
                 return ''
 
@@ -336,13 +263,6 @@ class CifContainer():
     def hkl_checksum_calcd(self) -> int:
         """
         Calculates the shelx checksum for the hkl file content of a cif file.
-    
-        #>>> c = CifContainer(Path('test-data/DK_zucker2_0m.cif'))
-        #>>> c.hkl_checksum_calcd
-        #69576
-        #>>> c = CifContainer(Path('test-data/4060310.cif'))
-        #>>> c.hkl_checksum_calcd
-        #0
         """
         hkl = self.hkl_file
         if hkl:
@@ -354,13 +274,6 @@ class CifContainer():
     def res_checksum_calcd(self) -> int:
         """
         Calculates the shelx checksum for the res file content of a cif file.
-    
-        #>>> c = CifContainer(Path('test-data/DK_zucker2_0m.cif'))
-        #>>> c.res_checksum_calcd
-        #52593
-        #>>> c = CifContainer(Path('test-data/4060310.cif'))
-        #>>> c.res_checksum_calcd
-        #0
         """
         res = self.res_file_data
         if res:
@@ -407,10 +320,6 @@ class CifContainer():
     def symmops(self) -> List[str]:
         """
         Reads the symmops from the cif file.
-    
-        >>> cif = CifContainer(Path('test-data/DK_ML7-66-final.cif'))
-        >>> cif.symmops
-        ['x, y, z', '-x, -y, -z']
         """
         xyz1 = self.block.find(("_symmetry_equiv_pos_as_xyz",))  # deprecated
         xyz2 = self.block.find(("_space_group_symop_operation_xyz",))  # New definition
@@ -419,19 +328,12 @@ class CifContainer():
         elif xyz2:
             return [i.str(0) for i in xyz2]
         else:
-            return []
+            return self.symmops_from_spgr
 
     @property
     def is_centrosymm(self) -> bool:
         """
-        >>> from cif.cif_file_io import CifContainer
-        >>> from pathlib import Path
-        >>> c = CifContainer(Path('test-data/DK_zucker2_0m-finalcif.cif'))
-        >>> c.is_centrosymm
-        False
-        >>> c = CifContainer(Path('test-data/DK_ML7-66-final.cif'))
-        >>> c.is_centrosymm
-        True
+        Whether a structuere is centro symmetric or not.
         """
         ops = gemmi.GroupOps([gemmi.Op(o) for o in self.symmops])
         return ops.is_centric()
@@ -522,28 +424,28 @@ class CifContainer():
                 yield (label1, label2, label3, angle, symm1, symm2)
 
     def iselement(self, name: str) -> str:
-        return self._name2elements[name]
+        return self._name2elements[name.upper()]
 
     def natoms(self, without_h: bool = False) -> int:
-        return len(list(self.atoms(without_h)))
+        return len(tuple(self.atoms(without_h)))
 
     def nbonds(self, without_h: bool = False) -> int:
         """
         Number of bonds in the cif object, with and without hydrogen atoms.
         """
-        return len(list(self.bonds(without_h)))
+        return len(tuple(self.bonds(without_h)))
 
     def nangles(self, without_h: bool = False) -> int:
         """
         Number of bond angles in the cif object, with and without hydrogen atoms.
         """
-        return len(list(self.angles(without_h)))
+        return len(tuple(self.angles(without_h)))
 
     def ntorsion_angles(self, without_h: bool = False) -> int:
         """
         Number of torsion angles in the cif object, with and without hydrogen atoms.
         """
-        return len(list(self.torsion_angles(without_h)))
+        return len(tuple(self.torsion_angles(without_h)))
 
     def torsion_angles(self, without_h: bool = False):
         label1 = self.block.find_loop('_geom_torsion_atom_site_label_1')
@@ -590,13 +492,6 @@ class CifContainer():
         high_prio_no_values, high_prio_with_values = self.get_keys()
         return high_prio_no_values + [['These below are already in:', '---------------------']] + high_prio_with_values
 
-    def is_centrokey(self, key):
-        """
-        Is True if the kurrent key is only valid 
-        for non-centrosymmetric structures
-        """
-        return self.is_centrosymm and key in non_centrosymm_keys
-
     def get_keys(self):
         """
         Returns the keys to be displayed in the main table as two separate lists.
@@ -614,24 +509,10 @@ class CifContainer():
                     continue
                 if key.startswith('_shelx'):
                     continue
-                if self.is_centrokey(key):
-                    continue
                 if not value or value == '?' or value == "'?'":
                     questions.append([key, value])
                 else:
                     with_values.append([key, value])
-        all_keys = [x[0] for x in with_values] + [x[0] for x in questions]
-        # check if there are keys not in the cif but in essential_keys:
-        for key in essential_keys:
-            if key not in all_keys:
-                if self.is_centrokey(key):
-                    continue
-                questions.append([key, '?'])
-                missing_keys.append(key)
-        for k in missing_keys:
-            if self.is_centrokey(k):
-                continue
-            self.block.set_pair(k, '?')
         return sorted(questions), sorted(with_values)
 
     def add_to_cif(self, key: str, value: str = '?'):
@@ -640,20 +521,34 @@ class CifContainer():
         """
         self.block.set_pair(key, value)
 
-    def test_checksums(self) -> None:
+    def test_res_checksum(self) -> bool:
         """
-        A method to check wether the checksums in the cif file fit to the content.
+        A method to check whether the checksums in the cif file fit to the content.
         """
-        from gui.dialogs import show_checksum_warning
         cif_res_ckecksum = 0
         if self.res_checksum_calcd > 0:
-            cif_res_ckecksum = self.block.find_value('_shelx_res_checksum') or -1
-            cif_res_ckecksum = int(cif_res_ckecksum)
+            cif_res_ckecksum = self['_shelx_res_checksum'] or -1
+            try:
+                cif_res_ckecksum = int(cif_res_ckecksum)
+            except ValueError:
+                cif_res_ckecksum = -1
         if cif_res_ckecksum > 0 and cif_res_ckecksum != self.res_checksum_calcd:
-            show_checksum_warning()
+            return False
+        else:
+            return True
+
+    def test_hkl_checksum(self) -> bool:
+        """
+        A method to check whether the checksums in the cif file fit to the content.
+        """
         cif_hkl_ckecksum = 0
         if self.hkl_checksum_calcd > 0:
-            cif_hkl_ckecksum = self.block.find_value('_shelx_hkl_checksum') or -1
-            cif_hkl_ckecksum = int(cif_hkl_ckecksum)
+            cif_hkl_ckecksum = self['_shelx_hkl_checksum'] or -1
+            try:
+                cif_hkl_ckecksum = int(cif_hkl_ckecksum)
+            except ValueError:
+                cif_hkl_ckecksum = -1
         if cif_hkl_ckecksum > 0 and cif_hkl_ckecksum != self.hkl_checksum_calcd:
-            show_checksum_warning(res=False)
+            return False
+        else:
+            return True

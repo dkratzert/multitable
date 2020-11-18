@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import itertools as it
+import os
 import re
+import time
 from pathlib import Path
 from typing import List
 
@@ -151,13 +153,13 @@ def format_space_group(table, cif, table_column):
     return space_group
 
 
-def make_report_from(files: List, output_filename: str = None):
+def make_report_from(files: List[Path], output_filename: str = None):
     """
     Creates a tabular cif report.
     :param files: Input cif files a list.
     :param output_filename: the table is saved to this file.
     """
-    nfiles = [i.rstrip('.cif') for i in files]  # remove file suffix for display
+    nfiles = files  # remove file suffix for display
     group_of_files = list(grouper(nfiles, 3))  # group in threes to fit on A4 page
     table_index = len(group_of_files) - 1  # n-th table
 
@@ -223,10 +225,9 @@ def make_report_from(files: List, output_filename: str = None):
 
         for table_column in range(0, 3):  # the three columns
             if page_number[1][table_column]:
-                filename = page_number[1][table_column] + '.cif'
+                filename = page_number[1][table_column]
                 cif = Cif()
-                with open(filename, 'r') as f:
-                    cif.parsefile(f.readlines())
+                cif.parsefile(filename.read_text().splitlines(keepends=True))
 
                 # Set text for all usual cif keywords:
                 for _, key in enumerate(cif_keywords_list):
@@ -356,7 +357,7 @@ def make_report_from(files: List, output_filename: str = None):
                 rfullrun.add_run(' = ' + ls_wR_factor_ref)
                 table.cell(29, table_column + 1).text = diff_density_max + '/' + diff_density_min
                 table.cell(30, table_column + 1).text = cif['_refine_ls_abs_structure_Flack']
-                print('File parsed: ' + filename + '  (' + sum_formula + ')  ' + space_group)
+                print('File parsed: ' + str(filename) + '  (' + sum_formula + ')  ' + space_group)
 
         for cell in enumerate(header_cells):
             if cell[0] < 3 and page_number[1][cell[0]] is not None:
@@ -376,4 +377,7 @@ def make_report_from(files: List, output_filename: str = None):
 
 
 if __name__ == '__main__':
-    make_report_from(get_files_from_current_dir())
+    t1 = time.perf_counter()
+    make_report_from(list(Path(r'D:\\GitHub\\FinalCif\\test-data\\').rglob('*.cif')))
+    print('Zeit: {}'.format(time.perf_counter()-t1))
+    os.startfile(Path('multitable.docx').absolute())
