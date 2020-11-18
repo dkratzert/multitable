@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import multitable2
+import multitable
 
 DEBUG = False
 
@@ -108,7 +108,7 @@ class AppWindow(QMainWindow):
                                                          caption="Save Table To",
                                                          directory='./multitable.docx')
         # initialFilter='*.docx')
-        multitable2.make_report_from(files_list, output_filename)
+        multitable.make_report_from(files_list, output_filename)
         self.ui.OutputTextEdit.append('\nReport finished - output file: {}'.format(output_filename))
         self.open_report_document(output_filename)
         self.ui.CifFileListListWidget.clear()
