@@ -11,6 +11,8 @@ from typing import Dict, List, Tuple, Union
 
 import gemmi
 
+from tools.tools import isnumeric
+
 
 class CifContainer():
     """
@@ -228,6 +230,8 @@ class CifContainer():
         except (AttributeError, RuntimeError):
             if self['_space_group_name_H-M_alt']:
                 return gemmi.cif.as_string(self['_space_group_name_H-M_alt'])
+            elif self['_symmetry_space_group_name_H-M']:
+                return gemmi.cif.as_string(self['_symmetry_space_group_name_H-M'])
             else:
                 return ''
 
@@ -248,6 +252,15 @@ class CifContainer():
     @property
     def spgr_number_from_symmops(self) -> int:
         return self._spgr().number
+
+    @property
+    def spgr_number(self) -> int:
+        if self['_space_group_IT_number'] and isnumeric(self['_space_group_IT_number']):
+            return int(self['_space_group_IT_number'])
+        elif self['_symmetry_Int_Tables_number'] and isnumeric(self['_symmetry_Int_Tables_number']):
+            return int(self['_symmetry_Int_Tables_number'])
+        else:
+            return self.spgr_number_from_symmops
 
     @property
     def crystal_system(self) -> str:

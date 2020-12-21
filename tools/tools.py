@@ -52,6 +52,16 @@ cif_keywords_list = (
 
 )
 
+def isnumeric(value: str) -> bool:
+    """
+    Determines if a string can be converted to a number.
+    """
+    value = value.split('(')[0]
+    try:
+        float(value)
+    except ValueError:
+        return False
+    return True
 
 def grouper(inputs, n=3, fillvalue=None):
     iters = [iter(inputs)] * n

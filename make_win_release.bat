@@ -1,11 +1,11 @@
 
 REM execute me from the main directory
 
-REM before: python3 -m venv venv
+python3 -m venv venv
 
 CALL venv\Scripts\activate.bat
 
-pip install pip -U
+venv\Scripts\python -m pip install -U pip
 
 pip install -r requirements.txt
 
