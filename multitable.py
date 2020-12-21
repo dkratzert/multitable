@@ -1,5 +1,5 @@
 import itertools
-import re
+import sys
 import time
 from contextlib import suppress
 from math import sin, radians
@@ -15,8 +15,6 @@ from lxml import etree
 from app_path import application_path
 from cif.cif_file_io import CifContainer
 from cif.text import retranslate_delimiter
-
-
 # protected space character:
 from tools.space_groups import SpaceGroups
 from tools.tools import grouper
@@ -428,7 +426,10 @@ if __name__ == '__main__':
     import os
 
     t1 = time.perf_counter()
-    files = list(Path(r'D:\\GitHub\\FinalCif\\test-data\\').rglob('*.cif'))
+    files = list(Path('.').glob('*.cif'))
+    if not files:
+        print('No CIF files found in current directory.')
+        sys.exit()
     print(files)
     outfile = make_report_from(files)
     print('Zeit: {}'.format(time.perf_counter() - t1))
