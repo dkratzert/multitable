@@ -17,4 +17,4 @@ if getattr(sys, 'frozen', False):
     os.environ['PATH'] = sys._MEIPASS + os.pathsep + os.environ['PATH']
     application_path = sys._MEIPASS
 else:
-    application_path = Path(os.path.abspath(__file__)).parent
+    application_path = str(Path(__file__).absolute().parent)
