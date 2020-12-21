@@ -116,5 +116,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-multitable.py
 .DS_Store
