@@ -19,30 +19,36 @@ from cif.text import retranslate_delimiter
 from tools.space_groups import SpaceGroups
 from tools.tools import grouper
 
-prot_space = u'\u00A0'
+# protected space character:
+protected_space = u'\u00A0'
 # Angstrom character:
-angstrom = u'\u212B'
+# angstrom = u'\u212B'    # Unicode angstrom sign (only for compatibility)
+angstrom = u'\u00C5'  # Latin capital A with ring above. The Unicode consortium recommends to use the regular letter
+# capital theta symbol:
+Theta_symbol = u'\u03F4'
 # bigger or equal:
 bequal = u'\u2265'
 # small_sigma:
 sigma_sm = u'\u03C3'
 # en dash:
 halbgeviert = u'\u2013'
+# minus sign:
+minus_sign = u'\u2212'
 # degree sign:
 degree_sign = u'\u00B0'
 # middle ellipsis
 ellipsis_mid = u'\u22EF'
 # ellipsis
-ellipsis = u'\u2026'
+ellipsis_char = u'\u2026'
 # less or equal sign
-lessequal = u'\u2264'
+less_or_equal = u'\u2264'
 # times (cross) symbol
 timessym = u'\u00d7'
 # lambda
 lambdasym = u'\u03bb'
 # one bar
 one_bar = u'\u0031\u0305'
-# Zero with space ZWSP
+# Zero-with space ZWSP
 zero_width_space = u'\u200B'
 
 cif_keywords_list = (
@@ -188,13 +194,13 @@ def populate_description_columns(main_table: Table) -> None:
     lgnd14 = main_table.cell(15, 0).paragraphs[0]
     lgnd14.add_run('\u03C1').font.italic = True
     lgnd14.add_run('calc').font.subscript = True
-    lgnd14.add_run(' [g/cm')
-    lgnd14.add_run('3').font.superscript = True
+    lgnd14.add_run(' [gcm')
+    lgnd14.add_run(minus_sign + '3').font.superscript = True
     lgnd14.add_run(']')
     lgnd15 = main_table.cell(16, 0).paragraphs[0]
     lgnd15.add_run('\u03BC').font.italic = True
     lgnd15.add_run(' [mm')
-    lgnd15.add_run('-1').font.superscript = True
+    lgnd15.add_run(minus_sign + '1').font.superscript = True
     lgnd15.add_run(']')
     lgnd16 = main_table.cell(17, 0).paragraphs[0]
     lgnd16.add_run('F').font.italic = True
@@ -235,7 +241,7 @@ def populate_description_columns(main_table: Table) -> None:
     lgnd29.add_run(' indexes \n[all data]')
     lgnd30 = main_table.cell(31, 0).paragraphs[0]
     lgnd30.add_run('Largest peak/hole [e{}'.format(angstrom))
-    lgnd30.add_run('3').font.superscript = True
+    lgnd30.add_run(minus_sign + '3').font.superscript = True
     lgnd30.add_run(']')
     lgnd31 = main_table.cell(32, 0).paragraphs[0]
     lgnd31.add_run('Flack X parameter')
@@ -313,7 +319,7 @@ def populate_main_table_values(main_table: Table, cif: CifContainer, column=1):
                                        this_or_quest(crystal_size_mid) + timessym + \
                                        this_or_quest(crystal_size_min)
     wavelength = str(' ({} ='.format(lambdasym) + this_or_quest(radiation_wavelength) +
-                     '{}{})'.format(prot_space, angstrom)).replace(' ', '')
+                     '{}{})'.format(protected_space, angstrom)).replace(' ', '')
     # radtype: ('Mo', 'K', '\\a')
     radtype = format_radiation(radiation_type)
     radrun = main_table.cell(21, column).paragraphs[0]
@@ -328,16 +334,18 @@ def populate_main_table_values(main_table: Table, cif: CifContainer, column=1):
     # wavelength lambda:
     radrun.add_run(' ' + wavelength)
     try:
-        d_max = ' ({:.2f}{}{})'.format(float(radiation_wavelength) / (2 * sin(radians(float(theta_max)))), prot_space,
-                                       angstrom)
+        d_max = ' ({:.2f}{}{})'.format(float(radiation_wavelength) / (2 * sin(radians(float(theta_max)))), 
+                                       protected_space, angstrom)
         # 2theta range:
         main_table.cell(22, column).text = "{:.2f} to {:.2f}{}" \
             .format(2 * float(theta_min), 2 * float(theta_max), d_max)
     except ValueError:
         main_table.cell(22, column).text = '? to ?'
-    main_table.cell(23, column).text = limit_h_min + ' {} h {} '.format(lessequal, lessequal) + limit_h_max + '\n' \
-                                       + limit_k_min + ' {} k {} '.format(lessequal, lessequal) + limit_k_max + '\n' \
-                                       + limit_l_min + ' {} l {} '.format(lessequal, lessequal) + limit_l_max
+    main_table.cell(23, column).text = limit_h_min + ' {} h {} '.format(less_or_equal, less_or_equal) + limit_h_max \
+                                       + '\n' \
+                                       + limit_k_min + ' {} k {} '.format(less_or_equal, less_or_equal) + limit_k_max \
+                                       + '\n' \
+                                       + limit_l_min + ' {} l {} '.format(less_or_equal, less_or_equal) + limit_l_max
     rint_p = main_table.cell(25, column).paragraphs[0]
     rint_p.add_run(this_or_quest(reflns_number_total) + '\n')
     rint_p.add_run('R').font.italic = True
