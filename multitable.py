@@ -177,9 +177,9 @@ def populate_description_columns(main_table: Table) -> None:
     lgnd8 = main_table.cell(9, 0).paragraphs[0]
     lgnd8.add_run('c').font.italic = True
     lgnd8.add_run(' [{}]'.format(angstrom))
-    lgnd9 = main_table.cell(10, 0).paragraphs[0].add_run('\u03B1 [{}]'.format(angstrom))
-    lgnd10 = main_table.cell(11, 0).paragraphs[0].add_run('\u03B2 [{}]'.format(angstrom))
-    lgnd11 = main_table.cell(12, 0).paragraphs[0].add_run('\u03B3 [{}]'.format(angstrom))
+    lgnd9 = main_table.cell(10, 0).paragraphs[0].add_run('\u03B1 [{}]'.format(degree_sign))
+    lgnd10 = main_table.cell(11, 0).paragraphs[0].add_run('\u03B2 [{}]'.format(degree_sign))
+    lgnd11 = main_table.cell(12, 0).paragraphs[0].add_run('\u03B3 [{}]'.format(degree_sign))
     lgnd12 = main_table.cell(13, 0).paragraphs[0]
     lgnd12.add_run('Volume [{}'.format(angstrom))
     lgnd12.add_run('3').font.superscript = True
