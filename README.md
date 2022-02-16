@@ -18,8 +18,7 @@ Notes:
 - Formatting is very crude, details should be fixed in Word (changing font size, cell spacing, etc.)
 - Sometimes special characters are shown as squares. Select all text and set the font again to fix.
 
-Warning:
-No responsibility taken for errors! Missing or invalid cif entries create question marks in the table.
+Missing or invalid cif entries create question marks in the table.
 
 
 The original Idea of this project was realized by Nils Trapp. Major modifications and an
