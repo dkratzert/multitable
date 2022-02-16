@@ -40,7 +40,7 @@ class SpaceGroups():
         overline = False
         sub = False
         for n, word in enumerate(sp):
-            char, format = word
+            char, format_ = word
             if len(sp) >= n + 1:
                 with suppress(Exception):
                     if sp[n][1] == 'overline':
@@ -51,13 +51,13 @@ class SpaceGroups():
             if overline:
                 overline = False
                 xml = xml + '<mover>\n<mn>{}</mn>\n<mo stretchy="false">&#x0305;</mo>'.format(char)
-            if not overline and format == 'overline':
+            if not overline and format_ == 'overline':
                 xml = xml + '\n</mover>\n'
-            if format == 'regular':
+            if format_ == 'regular':
                 xml = xml + '<mn>{}</mn>\n'.format(char)
-            if format == 'italic':
+            if format_ == 'italic':
                 xml = xml + '<mi>{}</mi>\n'.format(char)
-            if sub and format == 'sub':
+            if sub and format_ == 'sub':
                 xml = xml + '<mn>{}</mn>\n</msub>\n'.format(char)
         xml = xml + '</math>\n'
         return xml
@@ -84,14 +84,14 @@ class SpaceGroups():
         if not space_group:
             return ''
         for word in self.spgrps[space_group][0]:
-            char, format = word
-            if format == 'italic':
+            char, format_ = word
+            if format_ == 'italic':
                 html = html + '<i>{}</i>'.format(char)
-            elif format == 'regular':
+            elif format_ == 'regular':
                 html = html + char
-            elif format == 'sub':
+            elif format_ == 'sub':
                 html = html + '<sub>{}</sub>'.format(char)
-            elif format == 'overline':
+            elif format_ == 'overline':
                 html = html + '<span style=" text-decoration: overline;">{}</span>'.format(char)
             else:
                 print('##############', char)
