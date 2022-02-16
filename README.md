@@ -10,8 +10,8 @@ Usage:
 4. run script (or compiled exe file): a file called "multitable.docx" will be created
 
 Download Windows exe:
-* Commandline: https://xs3-data.uni-freiburg.de/multitable/multitable.exe
-* Graphical Version: https://xs3-data.uni-freiburg.de/multitable/multitable_gui.exe
+* Commandline: https://dkratzert.de/files/multitable/multitable.exe
+* Graphical Version: https://dkratzert.de/files/multitable/multitable_gui.exe
 
 Notes:
 - 3 structures fit into one table, new pages/tables will be appended until no more structures are left
