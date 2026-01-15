@@ -1,5 +1,5 @@
 altgraph==0.17
-future==0.18.2
+future==1.0.0
 lxml==4.6.5
 macholib==1.14
 pefile==2019.4.18
